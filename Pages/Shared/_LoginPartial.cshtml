@@ -1,0 +1,26 @@
+@using gestao_producao.Models
+@inject SignInManager<UsuarioAdmin> SignInManager
+@inject UserManager<UsuarioAdmin> UserManager
+
+<ul class="navbar-nav align-items-center">
+@if (SignInManager.IsSignedIn(User))
+{
+    <li class="nav-item me-2">
+        <span class="text-muted small">@User.Identity?.Name</span>
+    </li>
+    <li class="nav-item">
+        <form class="form-inline" asp-area="Identity" asp-page="/Account/Logout" asp-route-returnUrl="@Url.Page("/Index", new { area = "" })">
+            <button type="submit" class="btn btn-sm btn-outline-secondary">Sair</button>
+        </form>
+    </li>
+}
+else
+{
+    <li class="nav-item me-2">
+        <a class="btn btn-sm btn-outline-primary" asp-area="Identity" asp-page="/Account/Register">Registrar</a>
+    </li>
+    <li class="nav-item">
+        <a class="btn btn-sm btn-primary" asp-area="Identity" asp-page="/Account/Login">Entrar</a>
+    </li>
+}
+</ul>

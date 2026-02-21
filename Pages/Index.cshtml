@@ -1,10 +1,24 @@
 ﻿@page
 @model IndexModel
 @{
-    ViewData["Title"] = "Home page";
+    ViewData["Title"] = "Início";
 }
 
-<div class="text-center">
-    <h1 class="display-4">Welcome</h1>
-    <p>Learn about <a href="https://learn.microsoft.com/aspnet/core">building Web apps with ASP.NET Core</a>.</p>
+<div class="card border-0 shadow-sm">
+    <div class="card-body p-4">
+        <h1 class="h3 mb-3">Sistema de Gestão de Produção</h1>
+        <p class="text-muted mb-4">Base da Fase 1 concluída: autenticação, banco de dados e estrutura de módulos.</p>
+
+        <div class="row g-3">
+            <div class="col-md-6 col-xl-4">
+                <div class="p-3 bg-light rounded border">Planejamento de Produção</div>
+            </div>
+            <div class="col-md-6 col-xl-4">
+                <div class="p-3 bg-light rounded border">Gestão de Estoque</div>
+            </div>
+            <div class="col-md-6 col-xl-4">
+                <div class="p-3 bg-light rounded border">Rastreamento de Insumos</div>
+            </div>
+        </div>
+    </div>
 </div>
