@@ -1,5 +1,6 @@
 using gestao_producao.Data;
 using gestao_producao.Models;
+using gestao_producao.Pages;
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.AspNetCore.Mvc.RazorPages;
 using Microsoft.EntityFrameworkCore;
@@ -39,14 +40,14 @@ public class IndexModel : BasePageModel
 
         if (possuiDependencias)
         {
-            TempData["MensagemErro"] = "Produto não pode ser excluído porque possui vínculos no sistema.";
+            MensagemErro = "Produto não pode ser excluído porque possui vínculos no sistema.";
             return RedirectToPage();
         }
 
         _context.Produtos.Remove(produto);
         await _context.SaveChangesAsync();
 
-        TempData["MensagemSucesso"] = "Produto excluído com sucesso.";
+        MensagemSucesso = "Produto excluído com sucesso.";
         return RedirectToPage();
     }
 }

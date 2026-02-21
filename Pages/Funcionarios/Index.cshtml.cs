@@ -1,5 +1,6 @@
 using gestao_producao.Data;
 using gestao_producao.Models;
+using gestao_producao.Pages;
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.AspNetCore.Mvc.RazorPages;
 using Microsoft.EntityFrameworkCore;
@@ -36,7 +37,7 @@ public class IndexModel : BasePageModel
         _context.Funcionarios.Remove(funcionario);
         await _context.SaveChangesAsync();
 
-        TempData["MensagemSucesso"] = "Funcionário excluído com sucesso.";
+        MensagemSucesso = "Funcionário excluído com sucesso.";
         return RedirectToPage();
     }
 }

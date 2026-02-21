@@ -1,5 +1,6 @@
 using gestao_producao.Data;
 using gestao_producao.Models;
+using gestao_producao.Pages;
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.AspNetCore.Mvc.RazorPages;
 using Microsoft.EntityFrameworkCore;
@@ -36,14 +37,14 @@ public class IndexModel : BasePageModel
         var possuiOrdens = await _context.OrdensProducao.AnyAsync(x => x.EquipamentoId == id);
         if (possuiOrdens)
         {
-            TempData["MensagemErro"] = "Equipamento não pode ser excluído porque possui ordens vinculadas.";
+            MensagemErro = "Equipamento não pode ser excluído porque possui ordens vinculadas.";
             return RedirectToPage();
         }
 
         _context.Equipamentos.Remove(equipamento);
         await _context.SaveChangesAsync();
 
-        TempData["MensagemSucesso"] = "Equipamento excluído com sucesso.";
+        MensagemSucesso = "Equipamento excluído com sucesso.";
         return RedirectToPage();
     }
 }

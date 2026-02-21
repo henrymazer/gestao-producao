@@ -1,5 +1,6 @@
 using gestao_producao.Data;
 using gestao_producao.Models;
+using gestao_producao.Pages;
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.AspNetCore.Mvc.RazorPages;
 using Microsoft.EntityFrameworkCore;
@@ -36,14 +37,14 @@ public class IndexModel : BasePageModel
         var possuiInsumos = await _context.Insumos.AnyAsync(x => x.FornecedorId == id);
         if (possuiInsumos)
         {
-            TempData["MensagemErro"] = "Fornecedor não pode ser excluído porque possui insumos vinculados.";
+            MensagemErro = "Fornecedor não pode ser excluído porque possui insumos vinculados.";
             return RedirectToPage();
         }
 
         _context.Fornecedores.Remove(fornecedor);
         await _context.SaveChangesAsync();
 
-        TempData["MensagemSucesso"] = "Fornecedor excluído com sucesso.";
+        MensagemSucesso = "Fornecedor excluído com sucesso.";
         return RedirectToPage();
     }
 }

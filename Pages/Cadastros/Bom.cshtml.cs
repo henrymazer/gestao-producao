@@ -1,6 +1,7 @@
 using gestao_producao.Data;
 using gestao_producao.Models;
 using gestao_producao.Models.Enums;
+using gestao_producao.Pages;
 using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.AspNetCore.Mvc.RazorPages;
@@ -119,13 +120,13 @@ public class BomModel : BasePageModel
         if (ProdutoInsumo.Id == 0)
         {
             _context.ProdutoInsumos.Add(ProdutoInsumo);
-            TempData["MensagemSucesso"] = "Composição cadastrada com sucesso.";
+            MensagemSucesso = "Composição cadastrada com sucesso.";
         }
         else
         {
             itemDb!.QuantidadeNecessaria = ProdutoInsumo.QuantidadeNecessaria;
 
-            TempData["MensagemSucesso"] = "Composição atualizada com sucesso.";
+            MensagemSucesso = "Composição atualizada com sucesso.";
         }
 
         await _context.SaveChangesAsync();
@@ -147,14 +148,14 @@ public class BomModel : BasePageModel
 
         if (possuiOrdensAbertas)
         {
-            TempData["MensagemErro"] = "Composição não pode ser excluída porque existem ordens de produção planejadas ou em andamento para este produto.";
+            MensagemErro = "Composição não pode ser excluída porque existem ordens de produção planejadas ou em andamento para este produto.";
             return RedirectToPage();
         }
 
         _context.ProdutoInsumos.Remove(item);
         await _context.SaveChangesAsync();
 
-        TempData["MensagemSucesso"] = "Composição removida com sucesso.";
+        MensagemSucesso = "Composição removida com sucesso.";
         return RedirectToPage();
     }
 
