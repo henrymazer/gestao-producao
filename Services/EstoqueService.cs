@@ -186,6 +186,7 @@ public class EstoqueService
                 DataMovimentacao = DateTime.UtcNow
             });
 
+            await _context.Entry(estoque).ReloadAsync(cancellationToken);
             await _alertaService.AtualizarAlertasDoEstoqueAsync(estoque.Id, salvarAlteracoes: false, cancellationToken);
 
             await _context.SaveChangesAsync(cancellationToken);
