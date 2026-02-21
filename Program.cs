@@ -1,6 +1,5 @@
 using gestao_producao.Data;
 using gestao_producao.Models;
-using gestao_producao.Services;
 using Microsoft.AspNetCore.Identity;
 using Microsoft.EntityFrameworkCore;
 
@@ -13,12 +12,6 @@ builder.Services.AddDbContext<AppDbContext>(options =>
     options.UseNpgsql(connectionString));
 
 builder.Services.AddHttpContextAccessor();
-
-builder.Services.AddScoped<EstoqueService>();
-builder.Services.AddScoped<InsumoService>();
-builder.Services.AddScoped<ProducaoService>();
-builder.Services.AddScoped<AlertaService>();
-builder.Services.AddScoped<RelatorioService>();
 
 builder.Services
     .AddDefaultIdentity<UsuarioAdmin>(options =>

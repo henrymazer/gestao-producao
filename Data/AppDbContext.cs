@@ -4,6 +4,8 @@ using Microsoft.AspNetCore.Http;
 using Microsoft.AspNetCore.Identity.EntityFrameworkCore;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.EntityFrameworkCore.ChangeTracking;
+using Microsoft.EntityFrameworkCore.Storage;
+using Microsoft.EntityFrameworkCore.Metadata;
 using System.Security.Claims;
 
 namespace gestao_producao.Data;
@@ -34,24 +36,22 @@ public class AppDbContext : IdentityDbContext<UsuarioAdmin>
 
     public override int SaveChanges()
     {
-        AplicarTimestamps();
-        var auditoriasPendentes = RegistrarAuditoriaPreSave();
+        return SaveChanges(acceptAllChangesOnSuccess: true);
+    }
 
-        var result = base.SaveChanges();
-        RegistrarAuditoriaPosSave(auditoriasPendentes);
-
-        return result;
+    public override int SaveChanges(bool acceptAllChangesOnSuccess)
+    {
+        return ExecutarSaveChangesComAuditoria(acceptAllChangesOnSuccess);
     }
 
     public override async Task<int> SaveChangesAsync(CancellationToken cancellationToken = default)
     {
-        AplicarTimestamps();
-        var auditoriasPendentes = RegistrarAuditoriaPreSave();
+        return await SaveChangesAsync(acceptAllChangesOnSuccess: true, cancellationToken);
+    }
 
-        var result = await base.SaveChangesAsync(cancellationToken);
-        await RegistrarAuditoriaPosSaveAsync(auditoriasPendentes, cancellationToken);
-
-        return result;
+    public override Task<int> SaveChangesAsync(bool acceptAllChangesOnSuccess, CancellationToken cancellationToken = default)
+    {
+        return ExecutarSaveChangesComAuditoriaAsync(acceptAllChangesOnSuccess, cancellationToken);
     }
 
     protected override void OnModelCreating(ModelBuilder builder)
@@ -168,6 +168,91 @@ public class AppDbContext : IdentityDbContext<UsuarioAdmin>
         }
     }
 
+    private int ExecutarSaveChangesComAuditoria(bool acceptAllChangesOnSuccess)
+    {
+        AplicarTimestamps();
+        var auditoriasPendentes = RegistrarAuditoriaPreSave();
+
+        var abriuTransacao = Database.CurrentTransaction is null;
+        IDbContextTransaction? transacao = null;
+
+        try
+        {
+            if (abriuTransacao)
+            {
+                transacao = Database.BeginTransaction();
+            }
+
+            var result = base.SaveChanges(acceptAllChangesOnSuccess);
+            RegistrarAuditoriaPosSave(auditoriasPendentes);
+
+            if (ChangeTracker.HasChanges())
+            {
+                base.SaveChanges(acceptAllChangesOnSuccess);
+            }
+
+            transacao?.Commit();
+            return result;
+        }
+        catch
+        {
+            transacao?.Rollback();
+            throw;
+        }
+        finally
+        {
+            transacao?.Dispose();
+        }
+    }
+
+    private async Task<int> ExecutarSaveChangesComAuditoriaAsync(bool acceptAllChangesOnSuccess, CancellationToken cancellationToken)
+    {
+        AplicarTimestamps();
+        var auditoriasPendentes = RegistrarAuditoriaPreSave();
+
+        var abriuTransacao = Database.CurrentTransaction is null;
+        IDbContextTransaction? transacao = null;
+
+        try
+        {
+            if (abriuTransacao)
+            {
+                transacao = await Database.BeginTransactionAsync(cancellationToken);
+            }
+
+            var result = await base.SaveChangesAsync(acceptAllChangesOnSuccess, cancellationToken);
+            RegistrarAuditoriaPosSave(auditoriasPendentes);
+
+            if (ChangeTracker.HasChanges())
+            {
+                await base.SaveChangesAsync(acceptAllChangesOnSuccess, cancellationToken);
+            }
+
+            if (transacao is not null)
+            {
+                await transacao.CommitAsync(cancellationToken);
+            }
+
+            return result;
+        }
+        catch
+        {
+            if (transacao is not null)
+            {
+                await transacao.RollbackAsync(cancellationToken);
+            }
+
+            throw;
+        }
+        finally
+        {
+            if (transacao is not null)
+            {
+                await transacao.DisposeAsync();
+            }
+        }
+    }
+
     private List<AuditoriaPendente> RegistrarAuditoriaPreSave()
     {
         var auditEntries = ChangeTracker
@@ -188,9 +273,10 @@ public class AppDbContext : IdentityDbContext<UsuarioAdmin>
 
         foreach (var entry in auditEntries)
         {
-            var idProperty = entry.Properties.FirstOrDefault(p => p.Metadata.Name == "Id");
-            var idValue = idProperty?.CurrentValue?.ToString() ?? string.Empty;
-            var idTemporario = entry.State == EntityState.Added && (idProperty?.IsTemporary ?? false);
+            var chavePrimaria = entry.Metadata.FindPrimaryKey();
+            var idValue = ObterIdentificadorEntidade(entry, chavePrimaria);
+            var idTemporario = entry.State == EntityState.Added
+                && (chavePrimaria?.Properties.Any(p => entry.Property(p.Name).IsTemporary) ?? false);
 
             var antigo = entry.State == EntityState.Modified || entry.State == EntityState.Deleted
                 ? SerializarValores(entry.OriginalValues)
@@ -231,7 +317,7 @@ public class AppDbContext : IdentityDbContext<UsuarioAdmin>
         foreach (var pendente in auditoriasPendentes)
         {
             var entry = pendente.Entry;
-            var idValue = entry.Properties.FirstOrDefault(p => p.Metadata.Name == "Id")?.CurrentValue?.ToString() ?? string.Empty;
+            var idValue = ObterIdentificadorEntidade(entry, entry.Metadata.FindPrimaryKey());
 
             HistoricosAuditoria.Add(new HistoricoAuditoria
             {
@@ -245,36 +331,6 @@ public class AppDbContext : IdentityDbContext<UsuarioAdmin>
                 AtualizadoEm = pendente.Timestamp
             });
         }
-
-        base.SaveChanges();
-    }
-
-    private async Task RegistrarAuditoriaPosSaveAsync(IReadOnlyCollection<AuditoriaPendente> auditoriasPendentes, CancellationToken cancellationToken)
-    {
-        if (auditoriasPendentes.Count == 0)
-        {
-            return;
-        }
-
-        foreach (var pendente in auditoriasPendentes)
-        {
-            var entry = pendente.Entry;
-            var idValue = entry.Properties.FirstOrDefault(p => p.Metadata.Name == "Id")?.CurrentValue?.ToString() ?? string.Empty;
-
-            HistoricosAuditoria.Add(new HistoricoAuditoria
-            {
-                Entidade = entry.Metadata.ClrType.Name,
-                EntidadeId = idValue,
-                Acao = pendente.Estado.ToString(),
-                ValoresAnteriores = null,
-                ValoresNovos = SerializarValores(entry.CurrentValues),
-                UsuarioId = pendente.UsuarioId,
-                CriadoEm = pendente.Timestamp,
-                AtualizadoEm = pendente.Timestamp
-            });
-        }
-
-        await base.SaveChangesAsync(cancellationToken);
     }
 
     private string? ObterUsuarioIdAtual()
@@ -289,6 +345,32 @@ public class AppDbContext : IdentityDbContext<UsuarioAdmin>
             p => values[p]);
 
         return JsonSerializer.Serialize(dict);
+    }
+
+    private static string ObterIdentificadorEntidade(EntityEntry entry, IKey? chavePrimaria)
+    {
+        if (chavePrimaria is null || chavePrimaria.Properties.Count == 0)
+        {
+            return string.Empty;
+        }
+
+        if (chavePrimaria.Properties.Count == 1)
+        {
+            var valor = ObterValorChavePrimaria(entry, chavePrimaria.Properties[0]);
+            return valor?.ToString() ?? string.Empty;
+        }
+
+        var composto = chavePrimaria.Properties.ToDictionary(
+            propriedade => propriedade.Name,
+            propriedade => ObterValorChavePrimaria(entry, propriedade));
+
+        return JsonSerializer.Serialize(composto);
+    }
+
+    private static object? ObterValorChavePrimaria(EntityEntry entry, IProperty propriedade)
+    {
+        var valor = entry.Property(propriedade.Name);
+        return entry.State == EntityState.Deleted ? valor.OriginalValue : valor.CurrentValue;
     }
 
     private sealed record AuditoriaPendente(EntityEntry Entry, EntityState Estado, DateTime Timestamp, string? UsuarioId);
