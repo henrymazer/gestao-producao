@@ -7,12 +7,10 @@ namespace gestao_producao.Pages.Estoque;
 public class IndexModel : BasePageModel
 {
     private readonly EstoqueService _estoqueService;
-    private readonly AlertaService _alertaService;
 
-    public IndexModel(EstoqueService estoqueService, AlertaService alertaService)
+    public IndexModel(EstoqueService estoqueService)
     {
         _estoqueService = estoqueService;
-        _alertaService = alertaService;
     }
 
     [BindProperty(SupportsGet = true)]
@@ -26,7 +24,6 @@ public class IndexModel : BasePageModel
 
     public async Task OnGetAsync(CancellationToken cancellationToken)
     {
-        await _alertaService.AtualizarAlertasAsync(cancellationToken);
         Estoques = await _estoqueService.ListarEstoqueAsync(Filtro, TipoItem, cancellationToken);
         AlertasAtivos = await _estoqueService.ListarAlertasAtivosAsync(cancellationToken);
     }

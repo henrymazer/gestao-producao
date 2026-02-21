@@ -10,6 +10,7 @@ namespace gestao_producao.Pages.Estoque;
 
 public class MovimentarModel : BasePageModel
 {
+    private const int LimiteOpcoesEstoque = 200;
     private readonly AppDbContext _context;
     private readonly EstoqueService _estoqueService;
 
@@ -25,6 +26,7 @@ public class MovimentarModel : BasePageModel
     public List<SelectListItem> EstoquesOptions { get; private set; } = new();
     public List<SelectListItem> InsumosOptions { get; private set; } = new();
     public List<SelectListItem> ProdutosOptions { get; private set; } = new();
+    public bool EstoquesLimitados { get; private set; }
 
     public async Task OnGetAsync(CancellationToken cancellationToken)
     {
@@ -47,12 +49,12 @@ public class MovimentarModel : BasePageModel
                 ModelState.AddModelError("Input.TipoItem", "Selecione o tipo do item para entrada.");
             }
 
-            if (Input.TipoItem == Models.Enums.TipoItem.MateriaPrima && !Input.InsumoId.HasValue)
+            if (Input.TipoItem.HasValue && Input.TipoItem == Models.Enums.TipoItem.MateriaPrima && !Input.InsumoId.HasValue)
             {
                 ModelState.AddModelError("Input.InsumoId", "Selecione um insumo para entrada.");
             }
 
-            if (Input.TipoItem != Models.Enums.TipoItem.MateriaPrima && !Input.ProdutoId.HasValue)
+            if (Input.TipoItem.HasValue && Input.TipoItem != Models.Enums.TipoItem.MateriaPrima && !Input.ProdutoId.HasValue)
             {
                 ModelState.AddModelError("Input.ProdutoId", "Selecione um produto para entrada.");
             }
@@ -96,18 +98,27 @@ public class MovimentarModel : BasePageModel
 
     private async Task CarregarOptionsAsync(CancellationToken cancellationToken)
     {
-        EstoquesOptions = await _context.Estoques
+        var queryEstoques = _context.Estoques
             .AsNoTracking()
             .Include(x => x.Insumo)
             .Include(x => x.Produto)
-            .OrderBy(x => x.TipoItem)
+            .OrderByDescending(x => x.AtualizadoEm)
+            .ThenBy(x => x.TipoItem)
             .ThenBy(x => x.Insumo != null ? x.Insumo.Nome : x.Produto!.Nome)
+            .Take(LimiteOpcoesEstoque + 1);
+
+        var estoques = await queryEstoques
             .Select(x => new SelectListItem
             {
                 Value = x.Id.ToString(),
                 Text = $"{(x.Insumo != null ? x.Insumo.Nome : x.Produto!.Nome)} | Saldo: {x.QuantidadeAtual:N2} | Lote: {(string.IsNullOrWhiteSpace(x.Lote) ? "-" : x.Lote)}"
             })
             .ToListAsync(cancellationToken);
+
+        EstoquesLimitados = estoques.Count > LimiteOpcoesEstoque;
+        EstoquesOptions = EstoquesLimitados
+            ? estoques.Take(LimiteOpcoesEstoque).ToList()
+            : estoques;
 
         InsumosOptions = await _context.Insumos
             .AsNoTracking()

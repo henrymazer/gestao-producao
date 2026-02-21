@@ -13,11 +13,13 @@ builder.Services.AddDbContext<AppDbContext>(options =>
     options.UseNpgsql(connectionString));
 
 builder.Services.AddHttpContextAccessor();
+builder.Services.Configure<AlertaEstoqueOptions>(builder.Configuration.GetSection(AlertaEstoqueOptions.SectionName));
 builder.Services.AddScoped<EstoqueService>();
 builder.Services.AddScoped<InsumoService>();
 builder.Services.AddScoped<ProducaoService>();
 builder.Services.AddScoped<AlertaService>();
 builder.Services.AddScoped<RelatorioService>();
+builder.Services.AddHostedService<AlertaBackgroundService>();
 
 builder.Services
     .AddDefaultIdentity<UsuarioAdmin>(options =>

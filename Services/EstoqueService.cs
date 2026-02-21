@@ -3,6 +3,7 @@ using gestao_producao.Data;
 using gestao_producao.Models;
 using gestao_producao.Models.Enums;
 using Microsoft.EntityFrameworkCore;
+using Microsoft.EntityFrameworkCore.Storage;
 
 namespace gestao_producao.Services;
 
@@ -152,58 +153,89 @@ public class EstoqueService
             return ResultadoMovimentacao.Falha("Informe o motivo da movimentação.");
         }
 
-        var estoque = await ObterOuCriarEstoqueAsync(request, cancellationToken);
-        if (estoque is null)
+        await using IDbContextTransaction transacao = await _context.Database.BeginTransactionAsync(cancellationToken);
+
+        try
         {
-            return ResultadoMovimentacao.Falha("Não foi possível identificar o item de estoque para movimentação.");
+            var estoque = await ObterOuCriarEstoqueAsync(request, cancellationToken);
+            if (estoque is null)
+            {
+                await transacao.RollbackAsync(cancellationToken);
+                return ResultadoMovimentacao.Falha("Não foi possível identificar o item de estoque para movimentação.");
+            }
+
+            var atualizacaoEfetuada = await AtualizarSaldoEstoqueAtomicoAsync(estoque.Id, estoque.AtualizadoEm, request, cancellationToken);
+            if (!atualizacaoEfetuada)
+            {
+                await transacao.RollbackAsync(cancellationToken);
+                return request.TipoMovimentacao == TipoMovimentacao.Saida
+                    ? ResultadoMovimentacao.Falha("Quantidade insuficiente em estoque para realizar a saída.")
+                    : ResultadoMovimentacao.Falha("O item de estoque foi alterado por outro processo. Tente novamente.");
+            }
+
+            var usuarioId = user?.FindFirstValue(ClaimTypes.NameIdentifier) ?? user?.Identity?.Name;
+
+            _context.MovimentacoesEstoque.Add(new MovimentacaoEstoque
+            {
+                EstoqueId = estoque.Id,
+                TipoMovimentacao = request.TipoMovimentacao,
+                Quantidade = request.Quantidade,
+                Motivo = request.Motivo.Trim(),
+                DocumentoReferencia = request.DocumentoReferencia?.Trim(),
+                UsuarioId = usuarioId,
+                DataMovimentacao = DateTime.UtcNow
+            });
+
+            await _alertaService.AtualizarAlertasDoEstoqueAsync(estoque.Id, salvarAlteracoes: false, cancellationToken);
+
+            await _context.SaveChangesAsync(cancellationToken);
+            await transacao.CommitAsync(cancellationToken);
+
+            return ResultadoMovimentacao.Ok(estoque.Id);
+        }
+        catch
+        {
+            await transacao.RollbackAsync(cancellationToken);
+            throw;
+        }
+    }
+
+    private async Task<bool> AtualizarSaldoEstoqueAtomicoAsync(int estoqueId, DateTime atualizadoEmAtual, MovimentacaoRequest request, CancellationToken cancellationToken)
+    {
+        var agora = DateTime.UtcNow;
+        var lote = string.IsNullOrWhiteSpace(request.Lote) ? null : request.Lote.Trim();
+        var localizacao = string.IsNullOrWhiteSpace(request.Localizacao) ? null : request.Localizacao.Trim();
+        var possuiDataValidade = request.DataValidade.HasValue;
+
+        var query = _context.Estoques.Where(x => x.Id == estoqueId);
+
+        if (request.TipoMovimentacao == TipoMovimentacao.Saida)
+        {
+            query = query.Where(x => x.QuantidadeAtual >= request.Quantidade);
+        }
+        else if (request.TipoMovimentacao == TipoMovimentacao.Ajuste && request.TipoAjuste == TipoAjusteEstoque.DefinirSaldo)
+        {
+            query = query.Where(x => x.AtualizadoEm == atualizadoEmAtual);
         }
 
-        if (request.TipoMovimentacao == TipoMovimentacao.Saida && estoque.QuantidadeAtual < request.Quantidade)
-        {
-            return ResultadoMovimentacao.Falha("Quantidade insuficiente em estoque para realizar a saída.");
-        }
+        var linhasAfetadas = await query.ExecuteUpdateAsync(setters =>
+            setters
+                .SetProperty(
+                    x => x.QuantidadeAtual,
+                    x => request.TipoMovimentacao == TipoMovimentacao.Entrada
+                        ? x.QuantidadeAtual + request.Quantidade
+                        : request.TipoMovimentacao == TipoMovimentacao.Saida
+                            ? x.QuantidadeAtual - request.Quantidade
+                            : request.TipoAjuste == TipoAjusteEstoque.DefinirSaldo
+                                ? request.Quantidade
+                                : x.QuantidadeAtual + request.Quantidade)
+                .SetProperty(x => x.AtualizadoEm, agora)
+                .SetProperty(x => x.Lote, x => lote ?? x.Lote)
+                .SetProperty(x => x.Localizacao, x => localizacao ?? x.Localizacao)
+                .SetProperty(x => x.DataValidade, x => possuiDataValidade ? request.DataValidade : x.DataValidade),
+            cancellationToken);
 
-        estoque.QuantidadeAtual = request.TipoMovimentacao switch
-        {
-            TipoMovimentacao.Entrada => estoque.QuantidadeAtual + request.Quantidade,
-            TipoMovimentacao.Saida => estoque.QuantidadeAtual - request.Quantidade,
-            _ => request.TipoAjuste == TipoAjusteEstoque.DefinirSaldo
-                ? request.Quantidade
-                : estoque.QuantidadeAtual + request.Quantidade
-        };
-
-        if (!string.IsNullOrWhiteSpace(request.Lote))
-        {
-            estoque.Lote = request.Lote.Trim();
-        }
-
-        if (!string.IsNullOrWhiteSpace(request.Localizacao))
-        {
-            estoque.Localizacao = request.Localizacao.Trim();
-        }
-
-        if (request.DataValidade.HasValue)
-        {
-            estoque.DataValidade = request.DataValidade.Value;
-        }
-
-        var usuarioId = user?.FindFirstValue(ClaimTypes.NameIdentifier) ?? user?.Identity?.Name;
-
-        _context.MovimentacoesEstoque.Add(new MovimentacaoEstoque
-        {
-            EstoqueId = estoque.Id,
-            TipoMovimentacao = request.TipoMovimentacao,
-            Quantidade = request.Quantidade,
-            Motivo = request.Motivo.Trim(),
-            DocumentoReferencia = request.DocumentoReferencia?.Trim(),
-            UsuarioId = usuarioId,
-            DataMovimentacao = DateTime.UtcNow
-        });
-
-        await _context.SaveChangesAsync(cancellationToken);
-        await _alertaService.AtualizarAlertasDoEstoqueAsync(estoque.Id, cancellationToken);
-
-        return ResultadoMovimentacao.Ok(estoque.Id);
+        return linhasAfetadas == 1;
     }
 
     private async Task<Estoque?> ObterOuCriarEstoqueAsync(MovimentacaoRequest request, CancellationToken cancellationToken)

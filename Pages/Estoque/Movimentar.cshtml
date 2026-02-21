@@ -6,6 +6,8 @@
     ViewData["Title"] = "Movimentar Estoque";
     var isEntrada = Model.Input.TipoMovimentacao == TipoMovimentacao.Entrada;
     var isAjuste = Model.Input.TipoMovimentacao == TipoMovimentacao.Ajuste;
+    var tipoItemSelecionado = Model.Input.TipoItem.HasValue;
+    var isMateriaPrima = Model.Input.TipoItem == TipoItem.MateriaPrima;
 }
 
 <div class="d-flex flex-column flex-md-row justify-content-between align-items-md-center gap-2 mb-3">
@@ -28,43 +30,41 @@
                 <select asp-for="Input.TipoMovimentacao" class="form-select" asp-items="Html.GetEnumSelectList<TipoMovimentacao>()"></select>
             </div>
 
-            @if (!isEntrada)
-            {
-                <div class="col-12 col-md-8">
-                    <label asp-for="Input.EstoqueId" class="form-label">Item de estoque</label>
-                    <select asp-for="Input.EstoqueId" class="form-select" asp-items="Model.EstoquesOptions">
-                        <option value="">Selecione um item</option>
-                    </select>
-                    <span asp-validation-for="Input.EstoqueId" class="text-danger"></span>
-                </div>
-            }
+            <div id="grupo-estoque-existente" class="col-12 col-md-8 @(isEntrada ? "d-none" : string.Empty)">
+                <label asp-for="Input.EstoqueId" class="form-label">Item de estoque</label>
+                <select asp-for="Input.EstoqueId" class="form-select" asp-items="Model.EstoquesOptions" disabled="@(isEntrada)">
+                    <option value="">Selecione um item</option>
+                </select>
+                <span asp-validation-for="Input.EstoqueId" class="text-danger"></span>
+                @if (Model.EstoquesLimitados)
+                {
+                    <div class="form-text">Foram carregados os 200 itens mais recentes para manter a tela responsiva.</div>
+                }
+            </div>
 
-            @if (isEntrada)
-            {
-                <div class="col-12 col-md-4">
-                    <label asp-for="Input.TipoItem" class="form-label">Tipo do item</label>
-                    <select asp-for="Input.TipoItem" class="form-select" asp-items="Html.GetEnumSelectList<TipoItem>()">
-                        <option value="">Selecione</option>
-                    </select>
-                    <span asp-validation-for="Input.TipoItem" class="text-danger"></span>
-                </div>
+            <div id="grupo-entrada-tipo-item" class="col-12 col-md-4 @(isEntrada ? string.Empty : "d-none")">
+                <label asp-for="Input.TipoItem" class="form-label">Tipo do item</label>
+                <select asp-for="Input.TipoItem" class="form-select" asp-items="Html.GetEnumSelectList<TipoItem>()" disabled="@(!isEntrada)">
+                    <option value="">Selecione</option>
+                </select>
+                <span asp-validation-for="Input.TipoItem" class="text-danger"></span>
+            </div>
 
-                <div class="col-12 col-md-4">
-                    <label asp-for="Input.InsumoId" class="form-label">Insumo</label>
-                    <select asp-for="Input.InsumoId" class="form-select" asp-items="Model.InsumosOptions">
-                        <option value="">Selecione (para matéria-prima)</option>
-                    </select>
-                    <span asp-validation-for="Input.InsumoId" class="text-danger"></span>
-                </div>
+            <div id="grupo-entrada-insumo" class="col-12 col-md-4 @(isEntrada && tipoItemSelecionado && isMateriaPrima ? string.Empty : "d-none")">
+                <label asp-for="Input.InsumoId" class="form-label">Insumo</label>
+                <select asp-for="Input.InsumoId" class="form-select" asp-items="Model.InsumosOptions" disabled="@(!isEntrada || !tipoItemSelecionado || !isMateriaPrima)">
+                    <option value="">Selecione (para matéria-prima)</option>
+                </select>
+                <span asp-validation-for="Input.InsumoId" class="text-danger"></span>
+            </div>
 
-                <div class="col-12 col-md-4">
-                    <label asp-for="Input.ProdutoId" class="form-label">Produto</label>
-                    <select asp-for="Input.ProdutoId" class="form-select" asp-items="Model.ProdutosOptions">
-                        <option value="">Selecione (para em processo/acabado)</option>
-                    </select>
-                    <span asp-validation-for="Input.ProdutoId" class="text-danger"></span>
-                </div>
-            }
+            <div id="grupo-entrada-produto" class="col-12 col-md-4 @(isEntrada && tipoItemSelecionado && !isMateriaPrima ? string.Empty : "d-none")">
+                <label asp-for="Input.ProdutoId" class="form-label">Produto</label>
+                <select asp-for="Input.ProdutoId" class="form-select" asp-items="Model.ProdutosOptions" disabled="@(!isEntrada || !tipoItemSelecionado || isMateriaPrima)">
+                    <option value="">Selecione (para em processo/acabado)</option>
+                </select>
+                <span asp-validation-for="Input.ProdutoId" class="text-danger"></span>
+            </div>
 
             <div class="col-12 col-md-3">
                 <label asp-for="Input.Quantidade" class="form-label">Quantidade</label>
@@ -72,13 +72,10 @@
                 <span asp-validation-for="Input.Quantidade" class="text-danger"></span>
             </div>
 
-            @if (isAjuste)
-            {
-                <div class="col-12 col-md-3">
-                    <label asp-for="Input.TipoAjuste" class="form-label">Modo do ajuste</label>
-                    <select asp-for="Input.TipoAjuste" class="form-select" asp-items="Html.GetEnumSelectList<TipoAjusteEstoque>()"></select>
-                </div>
-            }
+            <div id="grupo-ajuste" class="col-12 col-md-3 @(isAjuste ? string.Empty : "d-none")">
+                <label asp-for="Input.TipoAjuste" class="form-label">Modo do ajuste</label>
+                <select asp-for="Input.TipoAjuste" class="form-select" asp-items="Html.GetEnumSelectList<TipoAjusteEstoque>()" disabled="@(!isAjuste)"></select>
+            </div>
 
             <div class="col-12 col-md-6">
                 <label asp-for="Input.Motivo" class="form-label">Motivo</label>
@@ -119,4 +116,65 @@
 
 @section Scripts {
     <partial name="_ValidationScriptsPartial" />
+    <script>
+        (() => {
+            const tipoMovimentacao = document.getElementById('Input_TipoMovimentacao');
+            const tipoItem = document.getElementById('Input_TipoItem');
+            const estoqueId = document.getElementById('Input_EstoqueId');
+            const insumoId = document.getElementById('Input_InsumoId');
+            const produtoId = document.getElementById('Input_ProdutoId');
+            const tipoAjuste = document.getElementById('Input_TipoAjuste');
+
+            const grupoEstoqueExistente = document.getElementById('grupo-estoque-existente');
+            const grupoTipoItem = document.getElementById('grupo-entrada-tipo-item');
+            const grupoInsumo = document.getElementById('grupo-entrada-insumo');
+            const grupoProduto = document.getElementById('grupo-entrada-produto');
+            const grupoAjuste = document.getElementById('grupo-ajuste');
+
+            const tipoEntrada = '@((int)TipoMovimentacao.Entrada)';
+            const tipoAjusteValor = '@((int)TipoMovimentacao.Ajuste)';
+            const tipoMateriaPrima = '@((int)TipoItem.MateriaPrima)';
+            const ajusteSomar = '@((int)TipoAjusteEstoque.Somar)';
+
+            const definirVisibilidade = (elemento, mostrar, input) => {
+                if (!elemento) {
+                    return;
+                }
+
+                elemento.classList.toggle('d-none', !mostrar);
+
+                if (input) {
+                    input.disabled = !mostrar;
+                    if (!mostrar) {
+                        input.value = '';
+                    }
+                }
+            };
+
+            const atualizarTela = () => {
+                const isEntrada = tipoMovimentacao?.value === tipoEntrada;
+                const isAjuste = tipoMovimentacao?.value === tipoAjusteValor;
+                const possuiTipoItem = (tipoItem?.value ?? '').length > 0;
+                const materiaPrimaSelecionada = tipoItem?.value === tipoMateriaPrima;
+
+                definirVisibilidade(grupoEstoqueExistente, !isEntrada, estoqueId);
+                definirVisibilidade(grupoTipoItem, isEntrada, tipoItem);
+                definirVisibilidade(grupoInsumo, isEntrada && possuiTipoItem && materiaPrimaSelecionada, insumoId);
+                definirVisibilidade(grupoProduto, isEntrada && possuiTipoItem && !materiaPrimaSelecionada, produtoId);
+
+                if (!isEntrada && tipoItem) {
+                    tipoItem.value = '';
+                }
+
+                definirVisibilidade(grupoAjuste, isAjuste, tipoAjuste);
+                if (!isAjuste && tipoAjuste) {
+                    tipoAjuste.value = ajusteSomar;
+                }
+            };
+
+            tipoMovimentacao?.addEventListener('change', atualizarTela);
+            tipoItem?.addEventListener('change', atualizarTela);
+            atualizarTela();
+        })();
+    </script>
 }
