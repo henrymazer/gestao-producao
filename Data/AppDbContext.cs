@@ -1,16 +1,21 @@
 using System.Text.Json;
 using gestao_producao.Models;
+using Microsoft.AspNetCore.Http;
 using Microsoft.AspNetCore.Identity.EntityFrameworkCore;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.EntityFrameworkCore.ChangeTracking;
+using System.Security.Claims;
 
 namespace gestao_producao.Data;
 
 public class AppDbContext : IdentityDbContext<UsuarioAdmin>
 {
-    public AppDbContext(DbContextOptions<AppDbContext> options)
+    private readonly IHttpContextAccessor _httpContextAccessor;
+
+    public AppDbContext(DbContextOptions<AppDbContext> options, IHttpContextAccessor httpContextAccessor)
         : base(options)
     {
+        _httpContextAccessor = httpContextAccessor;
     }
 
     public DbSet<Fornecedor> Fornecedores => Set<Fornecedor>();
@@ -30,15 +35,23 @@ public class AppDbContext : IdentityDbContext<UsuarioAdmin>
     public override int SaveChanges()
     {
         AplicarTimestamps();
-        RegistrarAuditoria();
-        return base.SaveChanges();
+        var auditoriasPendentes = RegistrarAuditoriaPreSave();
+
+        var result = base.SaveChanges();
+        RegistrarAuditoriaPosSave(auditoriasPendentes);
+
+        return result;
     }
 
-    public override Task<int> SaveChangesAsync(CancellationToken cancellationToken = default)
+    public override async Task<int> SaveChangesAsync(CancellationToken cancellationToken = default)
     {
         AplicarTimestamps();
-        RegistrarAuditoria();
-        return base.SaveChangesAsync(cancellationToken);
+        var auditoriasPendentes = RegistrarAuditoriaPreSave();
+
+        var result = await base.SaveChangesAsync(cancellationToken);
+        await RegistrarAuditoriaPosSaveAsync(auditoriasPendentes, cancellationToken);
+
+        return result;
     }
 
     protected override void OnModelCreating(ModelBuilder builder)
@@ -121,15 +134,19 @@ public class AppDbContext : IdentityDbContext<UsuarioAdmin>
             {
                 if (property.ClrType == typeof(decimal) || property.ClrType == typeof(decimal?))
                 {
-                    var isMonetary = property.Name.Contains("Preco", StringComparison.OrdinalIgnoreCase)
-                        || property.Name.Contains("Valor", StringComparison.OrdinalIgnoreCase)
-                        || property.Name.Contains("Custo", StringComparison.OrdinalIgnoreCase);
-
-                    property.SetPrecision(isMonetary ? 18 : 18);
-                    property.SetScale(isMonetary ? 2 : 4);
+                    property.SetPrecision(18);
+                    property.SetScale(4);
                 }
             }
         }
+
+        builder.Entity<Produto>()
+            .Property(x => x.PrecoVenda)
+            .HasPrecision(18, 2);
+
+        builder.Entity<Insumo>()
+            .Property(x => x.PrecoUnitario)
+            .HasPrecision(18, 2);
     }
 
     private void AplicarTimestamps()
@@ -151,7 +168,7 @@ public class AppDbContext : IdentityDbContext<UsuarioAdmin>
         }
     }
 
-    private void RegistrarAuditoria()
+    private List<AuditoriaPendente> RegistrarAuditoriaPreSave()
     {
         var auditEntries = ChangeTracker
             .Entries()
@@ -162,20 +179,31 @@ public class AppDbContext : IdentityDbContext<UsuarioAdmin>
 
         if (auditEntries.Count == 0)
         {
-            return;
+            return [];
         }
 
         var now = DateTime.UtcNow;
+        var usuarioId = ObterUsuarioIdAtual();
+        var pendentes = new List<AuditoriaPendente>();
 
         foreach (var entry in auditEntries)
         {
-            var idValue = entry.Properties.FirstOrDefault(p => p.Metadata.Name == "Id")?.CurrentValue?.ToString() ?? string.Empty;
+            var idProperty = entry.Properties.FirstOrDefault(p => p.Metadata.Name == "Id");
+            var idValue = idProperty?.CurrentValue?.ToString() ?? string.Empty;
+            var idTemporario = entry.State == EntityState.Added && (idProperty?.IsTemporary ?? false);
+
             var antigo = entry.State == EntityState.Modified || entry.State == EntityState.Deleted
                 ? SerializarValores(entry.OriginalValues)
                 : null;
             var novo = entry.State == EntityState.Modified || entry.State == EntityState.Added
                 ? SerializarValores(entry.CurrentValues)
                 : null;
+
+            if (idTemporario)
+            {
+                pendentes.Add(new AuditoriaPendente(entry, entry.State, now, usuarioId));
+                continue;
+            }
 
             HistoricosAuditoria.Add(new HistoricoAuditoria
             {
@@ -184,10 +212,74 @@ public class AppDbContext : IdentityDbContext<UsuarioAdmin>
                 Acao = entry.State.ToString(),
                 ValoresAnteriores = antigo,
                 ValoresNovos = novo,
+                UsuarioId = usuarioId,
                 CriadoEm = now,
                 AtualizadoEm = now
             });
         }
+
+        return pendentes;
+    }
+
+    private void RegistrarAuditoriaPosSave(IReadOnlyCollection<AuditoriaPendente> auditoriasPendentes)
+    {
+        if (auditoriasPendentes.Count == 0)
+        {
+            return;
+        }
+
+        foreach (var pendente in auditoriasPendentes)
+        {
+            var entry = pendente.Entry;
+            var idValue = entry.Properties.FirstOrDefault(p => p.Metadata.Name == "Id")?.CurrentValue?.ToString() ?? string.Empty;
+
+            HistoricosAuditoria.Add(new HistoricoAuditoria
+            {
+                Entidade = entry.Metadata.ClrType.Name,
+                EntidadeId = idValue,
+                Acao = pendente.Estado.ToString(),
+                ValoresAnteriores = null,
+                ValoresNovos = SerializarValores(entry.CurrentValues),
+                UsuarioId = pendente.UsuarioId,
+                CriadoEm = pendente.Timestamp,
+                AtualizadoEm = pendente.Timestamp
+            });
+        }
+
+        base.SaveChanges();
+    }
+
+    private async Task RegistrarAuditoriaPosSaveAsync(IReadOnlyCollection<AuditoriaPendente> auditoriasPendentes, CancellationToken cancellationToken)
+    {
+        if (auditoriasPendentes.Count == 0)
+        {
+            return;
+        }
+
+        foreach (var pendente in auditoriasPendentes)
+        {
+            var entry = pendente.Entry;
+            var idValue = entry.Properties.FirstOrDefault(p => p.Metadata.Name == "Id")?.CurrentValue?.ToString() ?? string.Empty;
+
+            HistoricosAuditoria.Add(new HistoricoAuditoria
+            {
+                Entidade = entry.Metadata.ClrType.Name,
+                EntidadeId = idValue,
+                Acao = pendente.Estado.ToString(),
+                ValoresAnteriores = null,
+                ValoresNovos = SerializarValores(entry.CurrentValues),
+                UsuarioId = pendente.UsuarioId,
+                CriadoEm = pendente.Timestamp,
+                AtualizadoEm = pendente.Timestamp
+            });
+        }
+
+        await base.SaveChangesAsync(cancellationToken);
+    }
+
+    private string? ObterUsuarioIdAtual()
+    {
+        return _httpContextAccessor.HttpContext?.User?.FindFirstValue(ClaimTypes.NameIdentifier);
     }
 
     private static string SerializarValores(PropertyValues values)
@@ -198,4 +290,6 @@ public class AppDbContext : IdentityDbContext<UsuarioAdmin>
 
         return JsonSerializer.Serialize(dict);
     }
+
+    private sealed record AuditoriaPendente(EntityEntry Entry, EntityState Estado, DateTime Timestamp, string? UsuarioId);
 }
