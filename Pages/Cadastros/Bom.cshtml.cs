@@ -34,7 +34,8 @@ public class BomModel : PageModel
 
     public async Task OnGetAsync(int? idEdicao)
     {
-        await CarregarDadosTelaAsync();
+        int? produtoIdSelecionado = null;
+        int? insumoIdSelecionado = null;
 
         if (idEdicao.HasValue)
         {
@@ -45,13 +46,17 @@ public class BomModel : PageModel
             if (item is not null)
             {
                 ProdutoInsumo = item;
+                produtoIdSelecionado = item.ProdutoId;
+                insumoIdSelecionado = item.InsumoId;
             }
         }
+
+        await CarregarDadosTelaAsync(produtoIdSelecionado, insumoIdSelecionado);
     }
 
     public async Task<IActionResult> OnPostSalvarAsync()
     {
-        await CarregarDadosTelaAsync();
+        await CarregarDadosTelaAsync(ProdutoInsumo.ProdutoId, ProdutoInsumo.InsumoId);
 
         if (ProdutoInsumo.QuantidadeNecessaria <= 0)
         {
@@ -148,7 +153,7 @@ public class BomModel : PageModel
         return RedirectToPage();
     }
 
-    private async Task CarregarDadosTelaAsync()
+    private async Task CarregarDadosTelaAsync(int? produtoIdSelecionado = null, int? insumoIdSelecionado = null)
     {
         Itens = await _context.ProdutoInsumos
             .AsNoTracking()
@@ -160,23 +165,23 @@ public class BomModel : PageModel
 
         ProdutosOptions = await _context.Produtos
             .AsNoTracking()
-            .Where(x => x.Ativo)
+            .Where(x => x.Ativo || (produtoIdSelecionado.HasValue && x.Id == produtoIdSelecionado.Value))
             .OrderBy(x => x.Nome)
             .Select(x => new SelectListItem
             {
                 Value = x.Id.ToString(),
-                Text = x.Nome
+                Text = x.Ativo ? x.Nome : $"{x.Nome} (inativo)"
             })
             .ToListAsync();
 
         InsumosOptions = await _context.Insumos
             .AsNoTracking()
-            .Where(x => x.Ativo)
+            .Where(x => x.Ativo || (insumoIdSelecionado.HasValue && x.Id == insumoIdSelecionado.Value))
             .OrderBy(x => x.Nome)
             .Select(x => new SelectListItem
             {
                 Value = x.Id.ToString(),
-                Text = x.Nome
+                Text = x.Ativo ? x.Nome : $"{x.Nome} (inativo)"
             })
             .ToListAsync();
     }
