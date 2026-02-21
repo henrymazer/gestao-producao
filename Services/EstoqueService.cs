@@ -129,6 +129,50 @@ public class EstoqueService
             .ToListAsync(cancellationToken);
     }
 
+    public async Task<List<SugestaoReabastecimentoResumo>> ListarSugestoesReabastecimentoAsync(
+        int limite = 20,
+        CancellationToken cancellationToken = default)
+    {
+        var saldoPorInsumo = await _context.Estoques
+            .AsNoTracking()
+            .Where(x => x.InsumoId.HasValue)
+            .GroupBy(x => x.InsumoId!.Value)
+            .Select(x => new
+            {
+                InsumoId = x.Key,
+                SaldoAtual = x.Sum(y => y.QuantidadeAtual)
+            })
+            .ToDictionaryAsync(x => x.InsumoId, x => x.SaldoAtual, cancellationToken);
+
+        var insumos = await _context.Insumos
+            .AsNoTracking()
+            .Include(x => x.Fornecedor)
+            .Where(x => x.Ativo && x.EstoqueMaximo > 0)
+            .OrderBy(x => x.Nome)
+            .ToListAsync(cancellationToken);
+
+        return insumos
+            .Select(insumo =>
+            {
+                var saldoAtual = saldoPorInsumo.GetValueOrDefault(insumo.Id, 0m);
+                var quantidadeSugerida = Math.Max(0m, insumo.EstoqueMaximo - saldoAtual);
+
+                return new SugestaoReabastecimentoResumo(
+                    insumo.Id,
+                    insumo.Nome,
+                    insumo.Fornecedor?.Nome,
+                    saldoAtual,
+                    insumo.EstoqueMinimo,
+                    insumo.EstoqueMaximo,
+                    quantidadeSugerida);
+            })
+            .Where(x => x.QuantidadeAtual <= x.EstoqueMinimo && x.QuantidadeSugerida > 0)
+            .OrderByDescending(x => x.EstoqueMinimo - x.QuantidadeAtual)
+            .ThenBy(x => x.InsumoNome)
+            .Take(Math.Max(1, limite))
+            .ToList();
+    }
+
     public async Task MarcarAlertaComoLidoAsync(int alertaId, CancellationToken cancellationToken = default)
     {
         var alerta = await _context.AlertasEstoque.FirstOrDefaultAsync(x => x.Id == alertaId, cancellationToken);
@@ -338,6 +382,15 @@ public sealed record AlertaResumo(
     string Mensagem,
     DateTime CriadoEm,
     string NomeItem);
+
+public sealed record SugestaoReabastecimentoResumo(
+    int InsumoId,
+    string InsumoNome,
+    string? FornecedorNome,
+    decimal QuantidadeAtual,
+    decimal EstoqueMinimo,
+    decimal EstoqueMaximo,
+    decimal QuantidadeSugerida);
 
 public class MovimentacaoRequest
 {

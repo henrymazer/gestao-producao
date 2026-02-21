@@ -597,6 +597,97 @@ public class ProducaoService
             .ThenBy(x => x.OrdemCodigo)
             .ToListAsync(cancellationToken);
     }
+
+    public async Task<List<NecessidadeInsumoResumo>> CalcularNecessidadeInsumosPorPlanosAtivosAsync(CancellationToken cancellationToken = default)
+    {
+        var ordensPlanejadas = await _context.PlanosProducaoItens
+            .AsNoTracking()
+            .Where(x =>
+                x.PlanoProducao != null &&
+                x.PlanoProducao.Status == StatusPlano.Ativo &&
+                x.OrdemProducao != null &&
+                x.OrdemProducao.Status != StatusOrdemProducao.Cancelada &&
+                x.OrdemProducao.Status != StatusOrdemProducao.Concluida)
+            .Select(x => new
+            {
+                x.OrdemProducao!.ProdutoId,
+                QuantidadePendente = Math.Max(0m, x.OrdemProducao.QuantidadePlanejada - x.OrdemProducao.QuantidadeProduzida)
+            })
+            .Where(x => x.QuantidadePendente > 0)
+            .ToListAsync(cancellationToken);
+
+        if (ordensPlanejadas.Count == 0)
+        {
+            return [];
+        }
+
+        var quantidadePorProduto = ordensPlanejadas
+            .GroupBy(x => x.ProdutoId)
+            .ToDictionary(x => x.Key, x => x.Sum(y => y.QuantidadePendente));
+
+        var produtoIds = quantidadePorProduto.Keys.ToList();
+
+        var composicao = await _context.ProdutoInsumos
+            .AsNoTracking()
+            .Include(x => x.Insumo)
+            .Where(x => produtoIds.Contains(x.ProdutoId))
+            .ToListAsync(cancellationToken);
+
+        if (composicao.Count == 0)
+        {
+            return [];
+        }
+
+        var necessidadePorInsumo = composicao
+            .GroupBy(x => new { x.InsumoId, Nome = x.Insumo != null ? x.Insumo.Nome : $"Insumo {x.InsumoId}" })
+            .Select(x =>
+            {
+                var necessidade = x.Sum(item =>
+                {
+                    var quantidadeProduto = quantidadePorProduto.GetValueOrDefault(item.ProdutoId, 0m);
+                    return quantidadeProduto * item.QuantidadeNecessaria;
+                });
+
+                return new
+                {
+                    x.Key.InsumoId,
+                    x.Key.Nome,
+                    QuantidadeNecessaria = necessidade
+                };
+            })
+            .Where(x => x.QuantidadeNecessaria > 0)
+            .ToList();
+
+        var insumoIds = necessidadePorInsumo.Select(x => x.InsumoId).Distinct().ToList();
+
+        var disponibilidade = await _context.Estoques
+            .AsNoTracking()
+            .Where(x => x.InsumoId.HasValue && insumoIds.Contains(x.InsumoId.Value))
+            .GroupBy(x => x.InsumoId!.Value)
+            .Select(x => new
+            {
+                InsumoId = x.Key,
+                QuantidadeDisponivel = x.Sum(y => y.QuantidadeAtual)
+            })
+            .ToDictionaryAsync(x => x.InsumoId, x => x.QuantidadeDisponivel, cancellationToken);
+
+        return necessidadePorInsumo
+            .Select(x =>
+            {
+                var quantidadeDisponivel = disponibilidade.GetValueOrDefault(x.InsumoId, 0m);
+                var quantidadeFaltante = Math.Max(0m, x.QuantidadeNecessaria - quantidadeDisponivel);
+
+                return new NecessidadeInsumoResumo(
+                    x.InsumoId,
+                    x.Nome,
+                    x.QuantidadeNecessaria,
+                    quantidadeDisponivel,
+                    quantidadeFaltante);
+            })
+            .OrderByDescending(x => x.QuantidadeFaltante)
+            .ThenBy(x => x.InsumoNome)
+            .ToList();
+    }
 }
 
 public sealed record PlanoResumo(
@@ -670,6 +761,13 @@ public sealed record DisponibilidadeInsumo(
 public sealed record VerificacaoDisponibilidadeResultado(
     bool Disponivel,
     List<DisponibilidadeInsumo> Itens);
+
+public sealed record NecessidadeInsumoResumo(
+    int InsumoId,
+    string InsumoNome,
+    decimal QuantidadeNecessaria,
+    decimal QuantidadeDisponivel,
+    decimal QuantidadeFaltante);
 
 public sealed record SalvarPlanoRequest(
     int Id,

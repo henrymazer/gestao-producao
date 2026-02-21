@@ -21,11 +21,13 @@ public class IndexModel : BasePageModel
 
     public List<EstoqueResumo> Estoques { get; private set; } = new();
     public List<AlertaResumo> AlertasAtivos { get; private set; } = new();
+    public List<SugestaoReabastecimentoResumo> SugestoesReabastecimento { get; private set; } = new();
 
     public async Task OnGetAsync(CancellationToken cancellationToken)
     {
         Estoques = await _estoqueService.ListarEstoqueAsync(Filtro, TipoItem, cancellationToken);
         AlertasAtivos = await _estoqueService.ListarAlertasAtivosAsync(cancellationToken);
+        SugestoesReabastecimento = await _estoqueService.ListarSugestoesReabastecimentoAsync(cancellationToken: cancellationToken);
     }
 
     public async Task<IActionResult> OnPostMarcarAlertaLidoAsync(int id, CancellationToken cancellationToken)

@@ -45,6 +45,52 @@
     </div>
 </div>
 
+<div class="card shadow-sm mb-3">
+    <div class="card-header bg-white">
+        <h2 class="h6 mb-0">Necessidade de insumos (planos ativos)</h2>
+    </div>
+    <div class="card-body p-0">
+        <div class="table-responsive">
+            <table class="table table-sm align-middle mb-0">
+                <thead class="table-light">
+                    <tr>
+                        <th>Insumo</th>
+                        <th>Necessário</th>
+                        <th>Disponível</th>
+                        <th>Faltante</th>
+                        <th>Status</th>
+                    </tr>
+                </thead>
+                <tbody>
+                @if (Model.NecessidadesInsumos.Count == 0)
+                {
+                    <tr>
+                        <td colspan="5" class="text-center text-muted py-3">Sem necessidade pendente para planos ativos.</td>
+                    </tr>
+                }
+                else
+                {
+                    foreach (var item in Model.NecessidadesInsumos.Take(12))
+                    {
+                        <tr>
+                            <td>@item.InsumoNome</td>
+                            <td>@item.QuantidadeNecessaria.ToString("N4")</td>
+                            <td>@item.QuantidadeDisponivel.ToString("N4")</td>
+                            <td>@item.QuantidadeFaltante.ToString("N4")</td>
+                            <td>
+                                <span class="badge @(item.QuantidadeFaltante > 0 ? "bg-danger" : "bg-success")">
+                                    @(item.QuantidadeFaltante > 0 ? "Repor" : "Coberto")
+                                </span>
+                            </td>
+                        </tr>
+                    }
+                }
+                </tbody>
+            </table>
+        </div>
+    </div>
+</div>
+
 <div class="row g-3">
     <div class="col-12 col-xl-7">
         <div class="card shadow-sm">

@@ -378,12 +378,12 @@ gestao-producao/
 ### Fase 7 — Automação e Polimento (Semana 8-9)
 > Objetivo: Automações e refinamento
 
-- [ ] F32 — Sugestão de reabastecimento
-- [ ] F34 — Geração automática de alertas
-- [ ] F35 — Cálculo de necessidade de insumos
-- [ ] Testes e ajustes finais
-- [ ] Otimização de performance
-- [ ] Documentação de uso
+- [x] F32 — Sugestão de reabastecimento
+- [x] F34 — Geração automática de alertas
+- [x] F35 — Cálculo de necessidade de insumos
+- [x] Testes e ajustes finais
+- [x] Otimização de performance
+- [x] Documentação de uso
 
 ---
 
