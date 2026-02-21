@@ -1,11 +1,10 @@
 using gestao_producao.Data;
 using gestao_producao.Models;
 using Microsoft.AspNetCore.Mvc;
-using Microsoft.AspNetCore.Mvc.RazorPages;
 
 namespace gestao_producao.Pages.Funcionarios;
 
-public class FormModel : PageModel
+public class FormModel : BasePageModel
 {
     private readonly AppDbContext _context;
 
@@ -46,7 +45,7 @@ public class FormModel : PageModel
         if (Funcionario.Id == 0)
         {
             _context.Funcionarios.Add(Funcionario);
-            TempData["MensagemSucesso"] = "Funcionário cadastrado com sucesso.";
+            MensagemSucesso = "Funcionário cadastrado com sucesso.";
         }
         else
         {
@@ -62,7 +61,7 @@ public class FormModel : PageModel
             funcionarioDb.Disponivel = Funcionario.Disponivel;
             funcionarioDb.Ativo = Funcionario.Ativo;
 
-            TempData["MensagemSucesso"] = "Funcionário atualizado com sucesso.";
+            MensagemSucesso = "Funcionário atualizado com sucesso.";
         }
 
         await _context.SaveChangesAsync();

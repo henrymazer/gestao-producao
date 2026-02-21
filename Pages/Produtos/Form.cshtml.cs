@@ -1,12 +1,11 @@
 using gestao_producao.Data;
 using gestao_producao.Models;
 using Microsoft.AspNetCore.Mvc;
-using Microsoft.AspNetCore.Mvc.RazorPages;
 using Microsoft.EntityFrameworkCore;
 
 namespace gestao_producao.Pages.Produtos;
 
-public class FormModel : PageModel
+public class FormModel : BasePageModel
 {
     private readonly AppDbContext _context;
 
@@ -57,7 +56,7 @@ public class FormModel : PageModel
         if (Produto.Id == 0)
         {
             _context.Produtos.Add(Produto);
-            TempData["MensagemSucesso"] = "Produto cadastrado com sucesso.";
+            MensagemSucesso = "Produto cadastrado com sucesso.";
         }
         else
         {
@@ -74,7 +73,7 @@ public class FormModel : PageModel
             produtoDb.Descricao = Produto.Descricao;
             produtoDb.Ativo = Produto.Ativo;
 
-            TempData["MensagemSucesso"] = "Produto atualizado com sucesso.";
+            MensagemSucesso = "Produto atualizado com sucesso.";
         }
 
         await _context.SaveChangesAsync();

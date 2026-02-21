@@ -1,12 +1,11 @@
 using gestao_producao.Data;
 using gestao_producao.Models;
 using Microsoft.AspNetCore.Mvc;
-using Microsoft.AspNetCore.Mvc.RazorPages;
 using Microsoft.EntityFrameworkCore;
 
 namespace gestao_producao.Pages.Fornecedores;
 
-public class FormModel : PageModel
+public class FormModel : BasePageModel
 {
     private readonly AppDbContext _context;
 
@@ -57,7 +56,7 @@ public class FormModel : PageModel
         if (Fornecedor.Id == 0)
         {
             _context.Fornecedores.Add(Fornecedor);
-            TempData["MensagemSucesso"] = "Fornecedor cadastrado com sucesso.";
+            MensagemSucesso = "Fornecedor cadastrado com sucesso.";
         }
         else
         {
@@ -73,7 +72,7 @@ public class FormModel : PageModel
             fornecedorDb.Endereco = Fornecedor.Endereco;
             fornecedorDb.Ativo = Fornecedor.Ativo;
 
-            TempData["MensagemSucesso"] = "Fornecedor atualizado com sucesso.";
+            MensagemSucesso = "Fornecedor atualizado com sucesso.";
         }
 
         await _context.SaveChangesAsync();

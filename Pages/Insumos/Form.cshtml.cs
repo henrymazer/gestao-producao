@@ -1,13 +1,12 @@
 using gestao_producao.Data;
 using gestao_producao.Models;
 using Microsoft.AspNetCore.Mvc;
-using Microsoft.AspNetCore.Mvc.RazorPages;
 using Microsoft.AspNetCore.Mvc.Rendering;
 using Microsoft.EntityFrameworkCore;
 
 namespace gestao_producao.Pages.Insumos;
 
-public class FormModel : PageModel
+public class FormModel : BasePageModel
 {
     private readonly AppDbContext _context;
 
@@ -68,7 +67,7 @@ public class FormModel : PageModel
         if (Insumo.Id == 0)
         {
             _context.Insumos.Add(Insumo);
-            TempData["MensagemSucesso"] = "Insumo cadastrado com sucesso.";
+            MensagemSucesso = "Insumo cadastrado com sucesso.";
         }
         else
         {
@@ -88,7 +87,7 @@ public class FormModel : PageModel
             insumoDb.PrecoUnitario = Insumo.PrecoUnitario;
             insumoDb.Ativo = Insumo.Ativo;
 
-            TempData["MensagemSucesso"] = "Insumo atualizado com sucesso.";
+            MensagemSucesso = "Insumo atualizado com sucesso.";
         }
 
         await _context.SaveChangesAsync();

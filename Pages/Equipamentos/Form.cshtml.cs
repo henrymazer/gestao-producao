@@ -2,12 +2,11 @@ using gestao_producao.Data;
 using gestao_producao.Models;
 using gestao_producao.Models.Enums;
 using Microsoft.AspNetCore.Mvc;
-using Microsoft.AspNetCore.Mvc.RazorPages;
 using Microsoft.AspNetCore.Mvc.Rendering;
 
 namespace gestao_producao.Pages.Equipamentos;
 
-public class FormModel : PageModel
+public class FormModel : BasePageModel
 {
     private readonly AppDbContext _context;
 
@@ -54,7 +53,7 @@ public class FormModel : PageModel
         if (Equipamento.Id == 0)
         {
             _context.Equipamentos.Add(Equipamento);
-            TempData["MensagemSucesso"] = "Equipamento cadastrado com sucesso.";
+            MensagemSucesso = "Equipamento cadastrado com sucesso.";
         }
         else
         {
@@ -70,7 +69,7 @@ public class FormModel : PageModel
             equipamentoDb.Status = Equipamento.Status;
             equipamentoDb.Ativo = Equipamento.Ativo;
 
-            TempData["MensagemSucesso"] = "Equipamento atualizado com sucesso.";
+            MensagemSucesso = "Equipamento atualizado com sucesso.";
         }
 
         await _context.SaveChangesAsync();
