@@ -85,9 +85,11 @@ public class RastreabilidadeInsumoService
             .Where(x => x.Estoque != null && x.Estoque.InsumoId.HasValue)
             .AsQueryable();
 
+        var marcadorOrdemNoMotivo = $"OP {ordem.Codigo}";
+
         query = query.Where(x =>
             x.DocumentoReferencia == ordem.Codigo
-            || (x.Motivo != null && EF.Functions.Like(x.Motivo, $"%OP {ordem.Codigo}%")));
+            || (x.Motivo != null && x.Motivo.Contains(marcadorOrdemNoMotivo)));
 
         var movimentacoes = await query
             .OrderByDescending(x => x.DataMovimentacao)
@@ -149,13 +151,6 @@ public class RastreabilidadeInsumoService
             query = query.Where(x => x.DataMovimentacao <= fimInclusivo);
         }
 
-        var ordens = await _context.OrdensProducao
-            .AsNoTracking()
-            .Select(x => x.Codigo)
-            .ToListAsync(cancellationToken);
-
-        var codigosOrdens = ordens.ToHashSet(StringComparer.OrdinalIgnoreCase);
-
         var movimentacoes = await query
             .OrderByDescending(x => x.DataMovimentacao)
             .Take(500)
@@ -173,6 +168,21 @@ public class RastreabilidadeInsumoService
                 Localizacao = x.Estoque.Localizacao
             })
             .ToListAsync(cancellationToken);
+
+        var documentosReferencia = movimentacoes
+            .Select(x => x.DocumentoReferencia?.Trim())
+            .Where(x => !string.IsNullOrWhiteSpace(x))
+            .Distinct(StringComparer.OrdinalIgnoreCase)
+            .ToList();
+
+        var codigosOrdens = documentosReferencia.Count == 0
+            ? new HashSet<string>(StringComparer.OrdinalIgnoreCase)
+            : (await _context.OrdensProducao
+                .AsNoTracking()
+                .Where(x => documentosReferencia.Contains(x.Codigo))
+                .Select(x => x.Codigo)
+                .ToListAsync(cancellationToken))
+            .ToHashSet(StringComparer.OrdinalIgnoreCase);
 
         return movimentacoes
             .Select(x =>
