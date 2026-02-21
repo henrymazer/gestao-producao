@@ -368,12 +368,12 @@ gestao-producao/
 ### Fase 6 — Relatórios e Dashboard (Semana 7-8)
 > Objetivo: Visibilidade e análise
 
-- [ ] F26 — Dashboard principal com Chart.js
-- [ ] F27 — Relatório de desempenho de produção
-- [ ] F28 — Relatório de giro de estoque
-- [ ] F29 — Relatório de custos
-- [ ] F30 — Relatório de movimentações
-- [ ] F31 — Exportação CSV/PDF
+- [x] F26 — Dashboard principal com Chart.js
+- [x] F27 — Relatório de desempenho de produção
+- [x] F28 — Relatório de giro de estoque
+- [x] F29 — Relatório de custos
+- [x] F30 — Relatório de movimentações
+- [x] F31 — Exportação CSV/PDF
 
 ### Fase 7 — Automação e Polimento (Semana 8-9)
 > Objetivo: Automações e refinamento

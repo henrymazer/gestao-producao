@@ -1,7 +1,316 @@
 @page
+@model gestao_producao.Pages.Relatorios.IndexModel
 @{
-    ViewData["Title"] = "Relatórios";
+    ViewData["Title"] = "Relatórios e Dashboard";
 }
 
-<h1 class="h4">Módulo de Relatórios</h1>
-<p class="text-muted">Seção reservada para dashboards e exportações CSV/PDF.</p>
+<div class="d-flex flex-column flex-md-row justify-content-between align-items-md-center gap-3 mb-4">
+    <div>
+        <h1 class="h4 mb-1">Relatórios e Dashboard</h1>
+        <p class="text-muted mb-0">Indicadores operacionais e exportações CSV/PDF.</p>
+    </div>
+
+    <form method="get" class="row g-2 align-items-end">
+        <div class="col-12 col-md-auto">
+            <label class="form-label small text-muted mb-1" for="inicio">Início</label>
+            <input id="inicio" name="Inicio" type="date" class="form-control" value="@Model.Inicio?.ToString("yyyy-MM-dd")" />
+        </div>
+        <div class="col-12 col-md-auto">
+            <label class="form-label small text-muted mb-1" for="fim">Fim</label>
+            <input id="fim" name="Fim" type="date" class="form-control" value="@Model.Fim?.ToString("yyyy-MM-dd")" />
+        </div>
+        <div class="col-12 col-md-auto">
+            <button type="submit" class="btn btn-primary">Aplicar período</button>
+        </div>
+    </form>
+</div>
+
+@if (Model.Relatorios is not null)
+{
+    <div class="row g-3 mb-4">
+        <div class="col-6 col-xl-2">
+            <div class="card border-0 shadow-sm h-100">
+                <div class="card-body">
+                    <div class="small text-muted">Produção no dia final</div>
+                    <div class="h5 mb-0">@Model.Relatorios.Dashboard.ProducaoDia.ToString("N2")</div>
+                </div>
+            </div>
+        </div>
+        <div class="col-6 col-xl-2">
+            <div class="card border-0 shadow-sm h-100">
+                <div class="card-body">
+                    <div class="small text-muted">Produção na semana final</div>
+                    <div class="h5 mb-0">@Model.Relatorios.Dashboard.ProducaoSemana.ToString("N2")</div>
+                </div>
+            </div>
+        </div>
+        <div class="col-6 col-xl-2">
+            <div class="card border-0 shadow-sm h-100">
+                <div class="card-body">
+                    <div class="small text-muted">Produção no mês final</div>
+                    <div class="h5 mb-0">@Model.Relatorios.Dashboard.ProducaoMes.ToString("N2")</div>
+                </div>
+            </div>
+        </div>
+        <div class="col-6 col-xl-2">
+            <div class="card border-0 shadow-sm h-100">
+                <div class="card-body">
+                    <div class="small text-muted">Valor estoque</div>
+                    <div class="h5 mb-0">@Model.Relatorios.Dashboard.ValorEstoqueAtual.ToString("C2")</div>
+                </div>
+            </div>
+        </div>
+        <div class="col-6 col-xl-2">
+            <div class="card border-0 shadow-sm h-100">
+                <div class="card-body">
+                    <div class="small text-muted">Alertas ativos</div>
+                    <div class="h5 mb-0">@Model.Relatorios.Dashboard.AlertasAtivos</div>
+                </div>
+            </div>
+        </div>
+        <div class="col-6 col-xl-2">
+            <div class="card border-0 shadow-sm h-100">
+                <div class="card-body">
+                    <div class="small text-muted">OPs em andamento</div>
+                    <div class="h5 mb-0">@Model.Relatorios.Dashboard.OpsEmAndamento</div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <div class="card border-0 shadow-sm mb-4">
+        <div class="card-body">
+            <h2 class="h6">Dashboard principal (período selecionado)</h2>
+            <canvas id="kpiChart" height="80"></canvas>
+        </div>
+    </div>
+
+    <div class="card border-0 shadow-sm mb-4">
+        <div class="card-body">
+            <div class="d-flex justify-content-between align-items-center mb-3">
+                <h2 class="h6 mb-0">F27 - Desempenho de produção</h2>
+                <div class="d-flex gap-2">
+                    <form method="post" asp-page-handler="ExportCsv">
+                        <input type="hidden" name="relatorio" value="desempenho" />
+                        <input type="hidden" name="inicio" value="@Model.Inicio?.ToString("yyyy-MM-dd")" />
+                        <input type="hidden" name="fim" value="@Model.Fim?.ToString("yyyy-MM-dd")" />
+                        <button class="btn btn-sm btn-outline-primary" type="submit">CSV</button>
+                    </form>
+                    <form method="post" asp-page-handler="ExportPdf">
+                        <input type="hidden" name="relatorio" value="desempenho" />
+                        <input type="hidden" name="inicio" value="@Model.Inicio?.ToString("yyyy-MM-dd")" />
+                        <input type="hidden" name="fim" value="@Model.Fim?.ToString("yyyy-MM-dd")" />
+                        <button class="btn btn-sm btn-outline-secondary" type="submit">PDF</button>
+                    </form>
+                </div>
+            </div>
+            <div class="table-responsive">
+                <table class="table table-sm align-middle mb-0">
+                    <thead>
+                        <tr>
+                            <th>OP</th>
+                            <th>Produto</th>
+                            <th>Status</th>
+                            <th class="text-end">Planejada</th>
+                            <th class="text-end">Produzida</th>
+                            <th class="text-end">% Atendimento</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        @foreach (var item in Model.Relatorios.DesempenhoProducao)
+                        {
+                            <tr>
+                                <td>@item.CodigoOrdem</td>
+                                <td>@item.Produto</td>
+                                <td>@item.Status</td>
+                                <td class="text-end">@item.QuantidadePlanejada.ToString("N2")</td>
+                                <td class="text-end">@item.QuantidadeProduzida.ToString("N2")</td>
+                                <td class="text-end">@item.PercentualAtendimento.ToString("N1")%</td>
+                            </tr>
+                        }
+                    </tbody>
+                </table>
+            </div>
+        </div>
+    </div>
+
+    <div class="card border-0 shadow-sm mb-4">
+        <div class="card-body">
+            <div class="d-flex justify-content-between align-items-center mb-3">
+                <h2 class="h6 mb-0">F28 - Giro de estoque</h2>
+                <div class="d-flex gap-2">
+                    <form method="post" asp-page-handler="ExportCsv">
+                        <input type="hidden" name="relatorio" value="giro" />
+                        <input type="hidden" name="inicio" value="@Model.Inicio?.ToString("yyyy-MM-dd")" />
+                        <input type="hidden" name="fim" value="@Model.Fim?.ToString("yyyy-MM-dd")" />
+                        <button class="btn btn-sm btn-outline-primary" type="submit">CSV</button>
+                    </form>
+                    <form method="post" asp-page-handler="ExportPdf">
+                        <input type="hidden" name="relatorio" value="giro" />
+                        <input type="hidden" name="inicio" value="@Model.Inicio?.ToString("yyyy-MM-dd")" />
+                        <input type="hidden" name="fim" value="@Model.Fim?.ToString("yyyy-MM-dd")" />
+                        <button class="btn btn-sm btn-outline-secondary" type="submit">PDF</button>
+                    </form>
+                </div>
+            </div>
+            <div class="table-responsive">
+                <table class="table table-sm align-middle mb-0">
+                    <thead>
+                        <tr>
+                            <th>Item</th>
+                            <th>Tipo</th>
+                            <th class="text-end">Saldo atual</th>
+                            <th class="text-end">Entradas</th>
+                            <th class="text-end">Saídas</th>
+                            <th class="text-end">Giro</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        @foreach (var item in Model.Relatorios.GiroEstoque.Take(20))
+                        {
+                            <tr>
+                                <td>@item.NomeItem</td>
+                                <td>@item.TipoItem</td>
+                                <td class="text-end">@item.SaldoAtual.ToString("N2")</td>
+                                <td class="text-end">@item.EntradasPeriodo.ToString("N2")</td>
+                                <td class="text-end">@item.SaidasPeriodo.ToString("N2")</td>
+                                <td class="text-end">@item.Giro.ToString("N2")</td>
+                            </tr>
+                        }
+                    </tbody>
+                </table>
+            </div>
+        </div>
+    </div>
+
+    <div class="card border-0 shadow-sm mb-4">
+        <div class="card-body">
+            <div class="d-flex justify-content-between align-items-center mb-3">
+                <h2 class="h6 mb-0">F29 - Custos de insumos</h2>
+                <div class="d-flex gap-2">
+                    <form method="post" asp-page-handler="ExportCsv">
+                        <input type="hidden" name="relatorio" value="custos" />
+                        <input type="hidden" name="inicio" value="@Model.Inicio?.ToString("yyyy-MM-dd")" />
+                        <input type="hidden" name="fim" value="@Model.Fim?.ToString("yyyy-MM-dd")" />
+                        <button class="btn btn-sm btn-outline-primary" type="submit">CSV</button>
+                    </form>
+                    <form method="post" asp-page-handler="ExportPdf">
+                        <input type="hidden" name="relatorio" value="custos" />
+                        <input type="hidden" name="inicio" value="@Model.Inicio?.ToString("yyyy-MM-dd")" />
+                        <input type="hidden" name="fim" value="@Model.Fim?.ToString("yyyy-MM-dd")" />
+                        <button class="btn btn-sm btn-outline-secondary" type="submit">PDF</button>
+                    </form>
+                </div>
+            </div>
+            <div class="table-responsive">
+                <table class="table table-sm align-middle mb-0">
+                    <thead>
+                        <tr>
+                            <th>Insumo</th>
+                            <th class="text-end">Qtd consumida</th>
+                            <th class="text-end">Custo médio</th>
+                            <th class="text-end">Custo total</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        @foreach (var item in Model.Relatorios.CustosInsumo)
+                        {
+                            <tr>
+                                <td>@item.NomeInsumo</td>
+                                <td class="text-end">@item.QuantidadeConsumida.ToString("N2")</td>
+                                <td class="text-end">@item.CustoMedioUnitario.ToString("C2")</td>
+                                <td class="text-end">@item.CustoTotal.ToString("C2")</td>
+                            </tr>
+                        }
+                    </tbody>
+                </table>
+            </div>
+        </div>
+    </div>
+
+    <div class="card border-0 shadow-sm mb-4">
+        <div class="card-body">
+            <div class="d-flex justify-content-between align-items-center mb-3">
+                <h2 class="h6 mb-0">F30 - Movimentações de estoque</h2>
+                <div class="d-flex gap-2">
+                    <form method="post" asp-page-handler="ExportCsv">
+                        <input type="hidden" name="relatorio" value="movimentacoes" />
+                        <input type="hidden" name="inicio" value="@Model.Inicio?.ToString("yyyy-MM-dd")" />
+                        <input type="hidden" name="fim" value="@Model.Fim?.ToString("yyyy-MM-dd")" />
+                        <button class="btn btn-sm btn-outline-primary" type="submit">CSV</button>
+                    </form>
+                    <form method="post" asp-page-handler="ExportPdf">
+                        <input type="hidden" name="relatorio" value="movimentacoes" />
+                        <input type="hidden" name="inicio" value="@Model.Inicio?.ToString("yyyy-MM-dd")" />
+                        <input type="hidden" name="fim" value="@Model.Fim?.ToString("yyyy-MM-dd")" />
+                        <button class="btn btn-sm btn-outline-secondary" type="submit">PDF</button>
+                    </form>
+                </div>
+            </div>
+            <div class="table-responsive">
+                <table class="table table-sm align-middle mb-0">
+                    <thead>
+                        <tr>
+                            <th>Data</th>
+                            <th>Tipo</th>
+                            <th>Item</th>
+                            <th class="text-end">Quantidade</th>
+                            <th>Motivo</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        @foreach (var item in Model.Relatorios.Movimentacoes.Take(50))
+                        {
+                            <tr>
+                                <td>@item.DataMovimentacao.ToLocalTime().ToString("dd/MM/yyyy HH:mm")</td>
+                                <td>@item.TipoMovimentacao</td>
+                                <td>@item.NomeItem</td>
+                                <td class="text-end">@item.Quantidade.ToString("N2")</td>
+                                <td>@item.Motivo</td>
+                            </tr>
+                        }
+                    </tbody>
+                </table>
+            </div>
+        </div>
+    </div>
+}
+
+@section Scripts {
+    <script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.1/dist/chart.umd.min.js"></script>
+    <script>
+        const labels = @Html.Raw(Model.DashboardLabelsJson);
+        const producao = @Html.Raw(Model.DashboardProducaoJson);
+        const saidas = @Html.Raw(Model.DashboardSaidasJson);
+
+        const ctx = document.getElementById('kpiChart');
+        if (ctx && window.Chart) {
+            new Chart(ctx, {
+                type: 'line',
+                data: {
+                    labels,
+                    datasets: [
+                        {
+                            label: 'Produção concluída',
+                            data: producao,
+                            borderColor: '#0d6efd',
+                            backgroundColor: 'rgba(13, 110, 253, 0.2)',
+                            tension: 0.25
+                        },
+                        {
+                            label: 'Saídas de estoque',
+                            data: saidas,
+                            borderColor: '#dc3545',
+                            backgroundColor: 'rgba(220, 53, 69, 0.2)',
+                            tension: 0.25
+                        }
+                    ]
+                },
+                options: {
+                    responsive: true,
+                    maintainAspectRatio: true
+                }
+            });
+        }
+    </script>
+}
