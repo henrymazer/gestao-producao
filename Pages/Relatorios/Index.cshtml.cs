@@ -244,7 +244,13 @@ public class IndexModel : BasePageModel
     private static string CsvField(string? value)
     {
         var sanitized = value ?? string.Empty;
-        if (sanitized.Length > 0 && "=+-@".Contains(sanitized[0]))
+        var isNumeric = decimal.TryParse(
+            sanitized,
+            NumberStyles.Float,
+            CultureInfo.InvariantCulture,
+            out _);
+
+        if (!isNumeric && sanitized.Length > 0 && "=+-@".Contains(sanitized[0]))
         {
             sanitized = $"'{sanitized}";
         }
