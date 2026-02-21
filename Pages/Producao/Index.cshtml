@@ -1,7 +1,128 @@
 @page
+@model gestao_producao.Pages.Producao.IndexModel
+@using gestao_producao.Models.Enums
 @{
     ViewData["Title"] = "Produção";
 }
 
-<h1 class="h4">Módulo de Produção</h1>
-<p class="text-muted">Estrutura inicial criada. CRUDs e planejamento serão implementados nas próximas fases.</p>
+<div class="d-flex flex-column flex-md-row justify-content-between align-items-md-center gap-2 mb-3">
+    <div>
+        <h1 class="h4 mb-1">Planejamento de Produção</h1>
+        <p class="text-muted mb-0">Gestão de planos, ordens e acompanhamento de execução.</p>
+    </div>
+    <div class="d-flex gap-2">
+        <a asp-page="/Producao/Planos/Form" class="btn btn-outline-primary">Novo plano</a>
+        <a asp-page="/Producao/Ordens/Form" class="btn btn-primary">Nova ordem</a>
+    </div>
+</div>
+
+<partial name="_StatusMessages" model="Model" />
+
+<div class="row g-3 mb-3">
+    <div class="col-12 col-md-4">
+        <div class="card shadow-sm h-100">
+            <div class="card-body">
+                <div class="text-muted small">Planos ativos</div>
+                <div class="display-6">@Model.TotalPlanosAtivos</div>
+            </div>
+        </div>
+    </div>
+    <div class="col-12 col-md-4">
+        <div class="card shadow-sm h-100">
+            <div class="card-body">
+                <div class="text-muted small">Ordens em andamento</div>
+                <div class="display-6">@Model.TotalOrdensEmAndamento</div>
+            </div>
+        </div>
+    </div>
+    <div class="col-12 col-md-4">
+        <div class="card shadow-sm h-100">
+            <div class="card-body">
+                <div class="text-muted small">Ordens planejadas</div>
+                <div class="display-6">@Model.TotalOrdensPlanejadas</div>
+            </div>
+        </div>
+    </div>
+</div>
+
+<div class="row g-3">
+    <div class="col-12 col-xl-7">
+        <div class="card shadow-sm">
+            <div class="card-header bg-white d-flex justify-content-between align-items-center">
+                <h2 class="h6 mb-0">Próximas ordens</h2>
+                <a asp-page="/Producao/Ordens/Index" class="btn btn-sm btn-outline-secondary">Ver todas</a>
+            </div>
+            <div class="card-body p-0">
+                <div class="table-responsive">
+                    <table class="table table-sm table-hover align-middle mb-0">
+                        <thead class="table-light">
+                            <tr>
+                                <th>OP</th>
+                                <th>Produto</th>
+                                <th>Status</th>
+                                <th>Período</th>
+                            </tr>
+                        </thead>
+                        <tbody>
+                        @if (Model.Ordens.Count == 0)
+                        {
+                            <tr>
+                                <td colspan="4" class="text-center text-muted py-4">Nenhuma ordem cadastrada.</td>
+                            </tr>
+                        }
+                        else
+                        {
+                            foreach (var ordem in Model.Ordens.Take(8))
+                            {
+                                <tr>
+                                    <td>@ordem.Codigo</td>
+                                    <td>@ordem.ProdutoNome</td>
+                                    <td>
+                                        <span class="badge @(ordem.Status switch {
+                                            StatusOrdemProducao.Planejada => "bg-secondary",
+                                            StatusOrdemProducao.EmAndamento => "bg-primary",
+                                            StatusOrdemProducao.Concluida => "bg-success",
+                                            _ => "bg-danger"
+                                        })">@ordem.Status</span>
+                                    </td>
+                                    <td>@ordem.DataInicioPrevista.ToString("dd/MM") - @ordem.DataFimPrevista.ToString("dd/MM")</td>
+                                </tr>
+                            }
+                        }
+                        </tbody>
+                    </table>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <div class="col-12 col-xl-5">
+        <div class="card shadow-sm">
+            <div class="card-header bg-white d-flex justify-content-between align-items-center">
+                <h2 class="h6 mb-0">Timeline (7 dias atrás + 30 dias)</h2>
+                <a asp-page="/Producao/Timeline" class="btn btn-sm btn-outline-secondary">Abrir timeline</a>
+            </div>
+            <div class="card-body">
+                @if (Model.Timeline.Count == 0)
+                {
+                    <p class="text-muted mb-0">Sem ordens no período selecionado.</p>
+                }
+                else
+                {
+                    <div class="d-flex flex-column gap-2">
+                        @foreach (var item in Model.Timeline.Take(10))
+                        {
+                            <div class="border rounded p-2">
+                                <div class="d-flex justify-content-between align-items-center">
+                                    <strong>@item.OrdemCodigo</strong>
+                                    <small class="text-muted">@item.DataInicioPrevista.ToString("dd/MM") - @item.DataFimPrevista.ToString("dd/MM")</small>
+                                </div>
+                                <div class="small text-muted">@item.ProdutoNome @(string.IsNullOrWhiteSpace(item.PlanoNome) ? "" : $"| Plano: {item.PlanoNome}")</div>
+                            </div>
+                        }
+                    </div>
+                }
+            </div>
+        </div>
+    </div>
+</div>

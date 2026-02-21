@@ -1,0 +1,102 @@
+@page "{id:int?}"
+@model gestao_producao.Pages.Producao.Planos.FormModel
+@{
+    ViewData["Title"] = Model.EhEdicao ? "Editar Plano de Produção" : "Novo Plano de Produção";
+}
+
+<div class="mb-3">
+    <h1 class="h4 mb-1">@ViewData["Title"]</h1>
+    <p class="text-muted mb-0">Defina período, status e as ordens com prioridade de execução.</p>
+</div>
+
+<div class="card shadow-sm">
+    <div class="card-body">
+        <form method="post">
+            <input type="hidden" asp-for="Plano.Id" />
+
+            <div asp-validation-summary="ModelOnly" class="text-danger mb-3"></div>
+
+            <div class="row g-3 mb-3">
+                <div class="col-md-6">
+                    <label asp-for="Plano.Nome" class="form-label"></label>
+                    <input asp-for="Plano.Nome" class="form-control" />
+                    <span asp-validation-for="Plano.Nome" class="text-danger"></span>
+                </div>
+                <div class="col-md-6">
+                    <label asp-for="Plano.Status" class="form-label"></label>
+                    <select asp-for="Plano.Status" asp-items="Html.GetEnumSelectList<gestao_producao.Models.Enums.StatusPlano>()" class="form-select"></select>
+                </div>
+                <div class="col-md-6">
+                    <label asp-for="Plano.DataInicio" class="form-label"></label>
+                    <input asp-for="Plano.DataInicio" class="form-control" />
+                    <span asp-validation-for="Plano.DataInicio" class="text-danger"></span>
+                </div>
+                <div class="col-md-6">
+                    <label asp-for="Plano.DataFim" class="form-label"></label>
+                    <input asp-for="Plano.DataFim" class="form-control" />
+                    <span asp-validation-for="Plano.DataFim" class="text-danger"></span>
+                </div>
+                <div class="col-12">
+                    <label asp-for="Plano.Descricao" class="form-label"></label>
+                    <textarea asp-for="Plano.Descricao" class="form-control" rows="2"></textarea>
+                    <span asp-validation-for="Plano.Descricao" class="text-danger"></span>
+                </div>
+            </div>
+
+            <h2 class="h6">Vincular ordens ao plano (F09)</h2>
+            <p class="text-muted small">Selecione as ordens e informe a prioridade (1 = mais prioritária).</p>
+
+            <div class="table-responsive border rounded">
+                <table class="table table-sm align-middle mb-0">
+                    <thead class="table-light">
+                        <tr>
+                            <th style="width: 60px;">Vincular</th>
+                            <th>Ordem</th>
+                            <th>Produto</th>
+                            <th>Status</th>
+                            <th style="width: 150px;">Prioridade</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                    @if (Model.Ordens.Count == 0)
+                    {
+                        <tr>
+                            <td colspan="5" class="text-center text-muted py-3">Nenhuma ordem planejada/em andamento disponível.</td>
+                        </tr>
+                    }
+                    else
+                    {
+                        for (var i = 0; i < Model.Ordens.Count; i++)
+                        {
+                            <tr>
+                                <td>
+                                    <input type="hidden" asp-for="Ordens[i].OrdemId" />
+                                    <input type="hidden" asp-for="Ordens[i].Codigo" />
+                                    <input type="hidden" asp-for="Ordens[i].ProdutoNome" />
+                                    <input type="hidden" asp-for="Ordens[i].Status" />
+                                    <input asp-for="Ordens[i].Selecionada" class="form-check-input" />
+                                </td>
+                                <td>@Model.Ordens[i].Codigo</td>
+                                <td>@Model.Ordens[i].ProdutoNome</td>
+                                <td>@Model.Ordens[i].Status</td>
+                                <td>
+                                    <input asp-for="Ordens[i].Prioridade" class="form-control form-control-sm" min="1" />
+                                </td>
+                            </tr>
+                        }
+                    }
+                    </tbody>
+                </table>
+            </div>
+
+            <div class="d-flex gap-2 mt-4">
+                <button type="submit" class="btn btn-primary">Salvar</button>
+                <a asp-page="/Producao/Planos/Index" class="btn btn-outline-secondary">Cancelar</a>
+            </div>
+        </form>
+    </div>
+</div>
+
+@section Scripts {
+    <partial name="_ValidationScriptsPartial" />
+}

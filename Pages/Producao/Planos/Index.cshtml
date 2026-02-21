@@ -1,0 +1,68 @@
+@page
+@model gestao_producao.Pages.Producao.Planos.IndexModel
+@using gestao_producao.Models.Enums
+@{
+    ViewData["Title"] = "Planos de Produção";
+}
+
+<div class="d-flex flex-column flex-md-row justify-content-between align-items-md-center gap-2 mb-3">
+    <div>
+        <h1 class="h4 mb-1">Planos de Produção</h1>
+        <p class="text-muted mb-0">Planejamento por período com vínculo e prioridade de ordens.</p>
+    </div>
+    <a asp-page="/Producao/Planos/Form" class="btn btn-primary">Novo plano</a>
+</div>
+
+<partial name="_StatusMessages" model="Model" />
+
+<div class="card shadow-sm">
+    <div class="card-body p-0">
+        <div class="table-responsive">
+            <table class="table table-hover align-middle mb-0">
+                <thead class="table-light">
+                    <tr>
+                        <th>Nome</th>
+                        <th>Período</th>
+                        <th>Status</th>
+                        <th>Ordens</th>
+                        <th class="text-end">Ações</th>
+                    </tr>
+                </thead>
+                <tbody>
+                @if (Model.Planos.Count == 0)
+                {
+                    <tr>
+                        <td colspan="5" class="text-center text-muted py-4">Nenhum plano cadastrado.</td>
+                    </tr>
+                }
+                else
+                {
+                    foreach (var plano in Model.Planos)
+                    {
+                        <tr>
+                            <td>@plano.Nome</td>
+                            <td>@plano.DataInicio.ToString("dd/MM/yyyy") - @plano.DataFim.ToString("dd/MM/yyyy")</td>
+                            <td>
+                                <span class="badge @(plano.Status switch {
+                                    StatusPlano.Rascunho => "bg-secondary",
+                                    StatusPlano.Ativo => "bg-primary",
+                                    _ => "bg-success"
+                                })">@plano.Status</span>
+                            </td>
+                            <td>@plano.TotalOrdens</td>
+                            <td class="text-end">
+                                <div class="d-inline-flex gap-2">
+                                    <a asp-page="/Producao/Planos/Form" asp-route-id="@plano.Id" class="btn btn-sm btn-outline-primary">Editar</a>
+                                    <form method="post" asp-page-handler="Delete" asp-route-id="@plano.Id" onsubmit="return confirm('Confirma exclusão do plano?');">
+                                        <button type="submit" class="btn btn-sm btn-outline-danger">Excluir</button>
+                                    </form>
+                                </div>
+                            </td>
+                        </tr>
+                    }
+                }
+                </tbody>
+            </table>
+        </div>
+    </div>
+</div>

@@ -348,14 +348,14 @@ gestao-producao/
 ### Fase 4 — Planejamento de Produção (Semana 4-6)
 > Objetivo: Planejamento e execução de produção
 
-- [ ] F07 — CRUD Plano de Produção
-- [ ] F08 — CRUD Ordens de Produção
-- [ ] F09 — Vincular OPs ao Plano
-- [ ] F10 — Visualização de timeline/calendário
-- [ ] F11 — Verificação de disponibilidade
-- [ ] F12 — Acompanhamento de status
-- [ ] F13 — Ajuste dinâmico do plano
-- [ ] F33 — Baixa automática de insumos ao concluir OP
+- [x] F07 — CRUD Plano de Produção
+- [x] F08 — CRUD Ordens de Produção
+- [x] F09 — Vincular OPs ao Plano
+- [x] F10 — Visualização de timeline/calendário
+- [x] F11 — Verificação de disponibilidade
+- [x] F12 — Acompanhamento de status
+- [x] F13 — Ajuste dinâmico do plano
+- [x] F33 — Baixa automática de insumos ao concluir OP
 
 ### Fase 5 — Rastreamento de Insumos (Semana 6-7)
 > Objetivo: Rastreabilidade completa

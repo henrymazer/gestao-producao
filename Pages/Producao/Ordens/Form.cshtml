@@ -1,0 +1,90 @@
+@page "{id:int?}"
+@model gestao_producao.Pages.Producao.Ordens.FormModel
+@using gestao_producao.Models.Enums
+@{
+    ViewData["Title"] = Model.EhEdicao ? "Editar Ordem de Produção" : "Nova Ordem de Produção";
+}
+
+<div class="mb-3">
+    <h1 class="h4 mb-1">@ViewData["Title"]</h1>
+    <p class="text-muted mb-0">Cadastre a OP, ajuste cronograma e parâmetros de execução.</p>
+</div>
+
+<div class="card shadow-sm">
+    <div class="card-body">
+        <form method="post">
+            <input type="hidden" asp-for="Ordem.Id" />
+
+            <div asp-validation-summary="ModelOnly" class="text-danger mb-3"></div>
+
+            <div class="row g-3">
+                <div class="col-md-4">
+                    <label asp-for="Ordem.Codigo" class="form-label"></label>
+                    <input asp-for="Ordem.Codigo" class="form-control" />
+                    <span asp-validation-for="Ordem.Codigo" class="text-danger"></span>
+                </div>
+                <div class="col-md-4">
+                    <label asp-for="Ordem.ProdutoId" class="form-label">Produto</label>
+                    <select asp-for="Ordem.ProdutoId" asp-items="Model.ProdutosOptions" class="form-select"></select>
+                    <span asp-validation-for="Ordem.ProdutoId" class="text-danger"></span>
+                </div>
+                <div class="col-md-4">
+                    <label asp-for="Ordem.EquipamentoId" class="form-label">Equipamento</label>
+                    <select asp-for="Ordem.EquipamentoId" asp-items="Model.EquipamentosOptions" class="form-select"></select>
+                </div>
+                <div class="col-md-3">
+                    <label asp-for="Ordem.QuantidadePlanejada" class="form-label"></label>
+                    <input asp-for="Ordem.QuantidadePlanejada" class="form-control" />
+                    <span asp-validation-for="Ordem.QuantidadePlanejada" class="text-danger"></span>
+                </div>
+                <div class="col-md-3">
+                    <label asp-for="Ordem.QuantidadeProduzida" class="form-label"></label>
+                    <input asp-for="Ordem.QuantidadeProduzida" class="form-control" />
+                    <span asp-validation-for="Ordem.QuantidadeProduzida" class="text-danger"></span>
+                </div>
+                <div class="col-md-3">
+                    <label asp-for="Ordem.DataInicioPrevista" class="form-label"></label>
+                    <input asp-for="Ordem.DataInicioPrevista" class="form-control" />
+                    <span asp-validation-for="Ordem.DataInicioPrevista" class="text-danger"></span>
+                </div>
+                <div class="col-md-3">
+                    <label asp-for="Ordem.DataFimPrevista" class="form-label"></label>
+                    <input asp-for="Ordem.DataFimPrevista" class="form-control" />
+                    <span asp-validation-for="Ordem.DataFimPrevista" class="text-danger"></span>
+                </div>
+                <div class="col-md-4">
+                    <label asp-for="Ordem.Status" class="form-label"></label>
+                    <select asp-for="Ordem.Status" class="form-select">
+                        <option value="@StatusOrdemProducao.Planejada">Planejada</option>
+                        <option value="@StatusOrdemProducao.EmAndamento">EmAndamento</option>
+                        <option value="@StatusOrdemProducao.Cancelada">Cancelada</option>
+                    </select>
+                    <span asp-validation-for="Ordem.Status" class="text-danger"></span>
+                </div>
+                <div class="col-md-4">
+                    <label asp-for="Ordem.DataInicioReal" class="form-label"></label>
+                    <input asp-for="Ordem.DataInicioReal" class="form-control" />
+                    <span asp-validation-for="Ordem.DataInicioReal" class="text-danger"></span>
+                </div>
+                <div class="col-md-4">
+                    <label asp-for="Ordem.DataFimReal" class="form-label"></label>
+                    <input asp-for="Ordem.DataFimReal" class="form-control" />
+                    <span asp-validation-for="Ordem.DataFimReal" class="text-danger"></span>
+                </div>
+                <div class="col-12">
+                    <label asp-for="Ordem.Observacoes" class="form-label"></label>
+                    <textarea asp-for="Ordem.Observacoes" class="form-control" rows="3"></textarea>
+                </div>
+            </div>
+
+            <div class="d-flex gap-2 mt-4">
+                <button type="submit" class="btn btn-primary">Salvar</button>
+                <a asp-page="/Producao/Ordens/Index" class="btn btn-outline-secondary">Cancelar</a>
+            </div>
+        </form>
+    </div>
+</div>
+
+@section Scripts {
+    <partial name="_ValidationScriptsPartial" />
+}

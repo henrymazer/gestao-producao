@@ -1,0 +1,87 @@
+@page
+@model gestao_producao.Pages.Producao.TimelineModel
+@using gestao_producao.Models.Enums
+@{
+    ViewData["Title"] = "Timeline de Produção";
+    var rangeDias = (Model.Fim.Date - Model.Inicio.Date).TotalDays;
+    if (rangeDias < 1)
+    {
+        rangeDias = 1;
+    }
+}
+
+<div class="d-flex flex-column flex-md-row justify-content-between align-items-md-center gap-2 mb-3">
+    <div>
+        <h1 class="h4 mb-1">Timeline de Produção</h1>
+        <p class="text-muted mb-0">Visualização de ordens por janela de datas previstas (F10).</p>
+    </div>
+    <a asp-page="/Producao/Ordens/Index" class="btn btn-outline-secondary">Voltar para ordens</a>
+</div>
+
+<div class="card shadow-sm mb-3">
+    <div class="card-body">
+        <form method="get" class="row g-2 align-items-end">
+            <div class="col-12 col-md-4">
+                <label asp-for="Inicio" class="form-label"></label>
+                <input asp-for="Inicio" type="date" class="form-control" />
+            </div>
+            <div class="col-12 col-md-4">
+                <label asp-for="Fim" class="form-label"></label>
+                <input asp-for="Fim" type="date" class="form-control" />
+            </div>
+            <div class="col-12 col-md-4">
+                <button type="submit" class="btn btn-primary">Filtrar</button>
+            </div>
+        </form>
+    </div>
+</div>
+
+<div class="card shadow-sm">
+    <div class="card-body">
+        @if (Model.Itens.Count == 0)
+        {
+            <p class="text-muted mb-0">Nenhuma ordem encontrada no período selecionado.</p>
+        }
+        else
+        {
+            <div class="d-flex flex-column gap-3">
+                @foreach (var item in Model.Itens)
+                {
+                    var inicioOffset = (item.DataInicioPrevista.Date - Model.Inicio.Date).TotalDays;
+                    var duracao = (item.DataFimPrevista.Date - item.DataInicioPrevista.Date).TotalDays + 1;
+                    if (inicioOffset < 0)
+                    {
+                        inicioOffset = 0;
+                    }
+                    if (duracao < 1)
+                    {
+                        duracao = 1;
+                    }
+
+                    var left = (inicioOffset / rangeDias) * 100;
+                    var width = (duracao / rangeDias) * 100;
+                    if (left + width > 100)
+                    {
+                        width = 100 - left;
+                    }
+
+                    <div class="border rounded p-2">
+                        <div class="d-flex justify-content-between align-items-center mb-1">
+                            <strong>@item.OrdemCodigo - @item.ProdutoNome</strong>
+                            <small class="text-muted">@item.DataInicioPrevista.ToString("dd/MM/yyyy") - @item.DataFimPrevista.ToString("dd/MM/yyyy")</small>
+                        </div>
+                        <div class="small text-muted mb-2">Plano: @(string.IsNullOrWhiteSpace(item.PlanoNome) ? "Sem plano" : item.PlanoNome)</div>
+                        <div class="position-relative" style="height: 14px; background-color: #f1f3f5; border-radius: 999px;">
+                            <div style="position: absolute; height: 14px; left: @left.ToString("0.##", System.Globalization.CultureInfo.InvariantCulture)%; width: @width.ToString("0.##", System.Globalization.CultureInfo.InvariantCulture)%; border-radius: 999px; background-color: @(item.Status switch {
+                                StatusOrdemProducao.Planejada => "#6c757d",
+                                StatusOrdemProducao.EmAndamento => "#0d6efd",
+                                StatusOrdemProducao.Concluida => "#198754",
+                                _ => "#dc3545"
+                            });"></div>
+                        </div>
+                    </div>
+                }
+            </div>
+        }
+    </div>
+</div>

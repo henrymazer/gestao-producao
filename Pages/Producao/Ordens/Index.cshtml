@@ -1,0 +1,148 @@
+@page
+@model gestao_producao.Pages.Producao.Ordens.IndexModel
+@using gestao_producao.Models.Enums
+@{
+    ViewData["Title"] = "Ordens de Produção";
+}
+
+<div class="d-flex flex-column flex-md-row justify-content-between align-items-md-center gap-2 mb-3">
+    <div>
+        <h1 class="h4 mb-1">Ordens de Produção</h1>
+        <p class="text-muted mb-0">Acompanhe execução, disponibilidade de insumos e ajuste de status.</p>
+    </div>
+    <a asp-page="/Producao/Ordens/Form" class="btn btn-primary">Nova ordem</a>
+</div>
+
+<partial name="_StatusMessages" model="Model" />
+
+@if (Model.Disponibilidade is not null)
+{
+    <div class="card shadow-sm mb-3">
+        <div class="card-header bg-white">
+            <strong>Verificação de disponibilidade (OP #@Model.OrdemDisponibilidadeId)</strong>
+        </div>
+        <div class="card-body p-0">
+            <div class="table-responsive">
+                <table class="table table-sm mb-0">
+                    <thead class="table-light">
+                        <tr>
+                            <th>Insumo</th>
+                            <th>Necessário</th>
+                            <th>Disponível</th>
+                            <th>Status</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                    @if (Model.Disponibilidade.Itens.Count == 0)
+                    {
+                        <tr>
+                            <td colspan="4" class="text-center text-muted py-3">Esta ordem não possui composição BOM cadastrada.</td>
+                        </tr>
+                    }
+                    else
+                    {
+                        foreach (var item in Model.Disponibilidade.Itens)
+                        {
+                            <tr>
+                                <td>@item.InsumoNome</td>
+                                <td>@item.QuantidadeNecessaria.ToString("N4")</td>
+                                <td>@item.QuantidadeDisponivel.ToString("N4")</td>
+                                <td>
+                                    <span class="badge @(item.Atende ? "bg-success" : "bg-danger")">
+                                        @(item.Atende ? "OK" : "Faltando")
+                                    </span>
+                                </td>
+                            </tr>
+                        }
+                    }
+                    </tbody>
+                </table>
+            </div>
+        </div>
+    </div>
+}
+
+<div class="card shadow-sm">
+    <div class="card-body p-0">
+        <div class="table-responsive">
+            <table class="table table-hover align-middle mb-0">
+                <thead class="table-light">
+                    <tr>
+                        <th>OP</th>
+                        <th>Produto</th>
+                        <th>Planejado</th>
+                        <th>Produzido</th>
+                        <th>Status</th>
+                        <th>Período</th>
+                        <th>Plano</th>
+                        <th class="text-end">Ações</th>
+                    </tr>
+                </thead>
+                <tbody>
+                @if (Model.Ordens.Count == 0)
+                {
+                    <tr>
+                        <td colspan="8" class="text-center text-muted py-4">Nenhuma ordem cadastrada.</td>
+                    </tr>
+                }
+                else
+                {
+                    foreach (var ordem in Model.Ordens)
+                    {
+                        <tr>
+                            <td>@ordem.Codigo</td>
+                            <td>@ordem.ProdutoNome</td>
+                            <td>@ordem.QuantidadePlanejada.ToString("N4")</td>
+                            <td>@ordem.QuantidadeProduzida.ToString("N4")</td>
+                            <td>
+                                <span class="badge @(ordem.Status switch {
+                                    StatusOrdemProducao.Planejada => "bg-secondary",
+                                    StatusOrdemProducao.EmAndamento => "bg-primary",
+                                    StatusOrdemProducao.Concluida => "bg-success",
+                                    _ => "bg-danger"
+                                })">@ordem.Status</span>
+                            </td>
+                            <td>@ordem.DataInicioPrevista.ToString("dd/MM") - @ordem.DataFimPrevista.ToString("dd/MM")</td>
+                            <td>@(string.IsNullOrWhiteSpace(ordem.PlanoNome) ? "-" : ordem.PlanoNome)</td>
+                            <td class="text-end">
+                                <div class="d-inline-flex flex-wrap justify-content-end gap-1">
+                                    <form method="post" asp-page-handler="VerificarDisponibilidade" asp-route-id="@ordem.Id">
+                                        <button type="submit" class="btn btn-sm btn-outline-secondary">Disponibilidade</button>
+                                    </form>
+
+                                    @if (ordem.Status == StatusOrdemProducao.Planejada)
+                                    {
+                                        <form method="post" asp-page-handler="Iniciar" asp-route-id="@ordem.Id">
+                                            <button type="submit" class="btn btn-sm btn-outline-primary">Iniciar</button>
+                                        </form>
+                                    }
+
+                                    @if (ordem.Status is StatusOrdemProducao.Planejada or StatusOrdemProducao.EmAndamento)
+                                    {
+                                        <form method="post" asp-page-handler="Concluir" asp-route-id="@ordem.Id" onsubmit="return confirm('Concluir ordem e realizar baixa automática de insumos?');">
+                                            <button type="submit" class="btn btn-sm btn-outline-success">Concluir</button>
+                                        </form>
+                                    }
+
+                                    @if (ordem.Status is StatusOrdemProducao.Planejada or StatusOrdemProducao.EmAndamento)
+                                    {
+                                        <form method="post" asp-page-handler="Cancelar" asp-route-id="@ordem.Id" onsubmit="return confirm('Cancelar ordem?');">
+                                            <button type="submit" class="btn btn-sm btn-outline-warning">Cancelar</button>
+                                        </form>
+                                    }
+
+                                    <a asp-page="/Producao/Ordens/Form" asp-route-id="@ordem.Id" class="btn btn-sm btn-outline-primary">Editar</a>
+
+                                    <form method="post" asp-page-handler="Delete" asp-route-id="@ordem.Id" onsubmit="return confirm('Excluir ordem?');">
+                                        <button type="submit" class="btn btn-sm btn-outline-danger">Excluir</button>
+                                    </form>
+                                </div>
+                            </td>
+                        </tr>
+                    }
+                }
+                </tbody>
+            </table>
+        </div>
+    </div>
+</div>

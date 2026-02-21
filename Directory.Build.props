@@ -1,0 +1,6 @@
+<Project>
+  <PropertyGroup>
+    <!-- Evita uso do servidor de compilação (VBCSCompiler), que falha em ambientes com restrição de pipe no /tmp -->
+    <UseSharedCompilation>false</UseSharedCompilation>
+  </PropertyGroup>
+</Project>

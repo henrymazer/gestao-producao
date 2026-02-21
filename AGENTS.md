@@ -17,6 +17,12 @@
 - Para mudanças de schema: criar migration e aplicar no banco alvo Neon
 - Para validação de fase/checklist, sempre buscar evidência executável (comando + resultado)
 
+## Build/Deploy (Cloud Run)
+- Priorizar imagem de build Debian/Ubuntu para .NET SDK (ex.: `mcr.microsoft.com/dotnet/sdk:10.0`), evitar SDK Alpine no stage de build.
+- No build da solução em CI/CD, usar modo single-node para estabilidade: `dotnet build gestao-producao.sln -m:1`.
+- No publish para deploy, usar: `dotnet publish gestao-producao.csproj -c Release -m:1`.
+- Manter `UseSharedCompilation=false` via `Directory.Build.props` para evitar dependência de compiler server em ambientes com restrição de IPC/pipe.
+
 ## Uso do psql (Neon)
 
 ### Instalação local
