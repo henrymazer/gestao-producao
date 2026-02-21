@@ -9,7 +9,10 @@
         <h1 class="h4 mb-1">Insumos</h1>
         <p class="text-muted mb-0">Cadastro das matérias-primas e parâmetros de estoque.</p>
     </div>
-    <a asp-page="/Insumos/Form" class="btn btn-primary">Novo insumo</a>
+    <div class="d-flex gap-2">
+        <a asp-page="/Insumos/Rastreabilidade" class="btn btn-outline-secondary">Rastreabilidade</a>
+        <a asp-page="/Insumos/Form" class="btn btn-primary">Novo insumo</a>
+    </div>
 </div>
 
 <partial name="_StatusMessages" model="Model" />

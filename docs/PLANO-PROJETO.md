@@ -360,10 +360,10 @@ gestao-producao/
 ### Fase 5 — Rastreamento de Insumos (Semana 6-7)
 > Objetivo: Rastreabilidade completa
 
-- [ ] F22 — Registro detalhado de entrada
-- [ ] F23 — Rastreamento por OP
-- [ ] F24 — Histórico por insumo
-- [ ] F25 — Controle de lotes
+- [x] F22 — Registro detalhado de entrada
+- [x] F23 — Rastreamento por OP
+- [x] F24 — Histórico por insumo
+- [x] F25 — Controle de lotes
 
 ### Fase 6 — Relatórios e Dashboard (Semana 7-8)
 > Objetivo: Visibilidade e análise

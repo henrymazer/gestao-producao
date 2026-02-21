@@ -1,0 +1,277 @@
+@page
+@model gestao_producao.Pages.Insumos.RastreabilidadeModel
+@{
+    ViewData["Title"] = "Rastreabilidade de Insumos";
+}
+
+<div class="d-flex flex-column flex-md-row justify-content-between align-items-md-center gap-2 mb-3">
+    <div>
+        <h1 class="h4 mb-1">Rastreabilidade de insumos</h1>
+        <p class="text-muted mb-0">Entradas detalhadas, consumo por OP, histórico por insumo e controle de lotes.</p>
+    </div>
+    <div class="d-flex gap-2">
+        <a asp-page="/Estoque/Movimentar" class="btn btn-primary">Nova movimentação</a>
+        <a asp-page="/Insumos/Index" class="btn btn-outline-secondary">Voltar aos insumos</a>
+    </div>
+</div>
+
+<partial name="_StatusMessages" model="Model" />
+
+<div class="card shadow-sm mb-3">
+    <div class="card-body">
+        <form method="get" class="row g-2 align-items-end">
+            <div class="col-12 col-lg-4">
+                <label asp-for="InsumoId" class="form-label">Insumo</label>
+                <select asp-for="InsumoId" class="form-select" asp-items="Model.InsumosOptions">
+                    <option value="">Todos os insumos</option>
+                </select>
+            </div>
+            <div class="col-12 col-lg-4">
+                <label asp-for="OrdemId" class="form-label">Ordem de produção</label>
+                <select asp-for="OrdemId" class="form-select" asp-items="Model.OrdensOptions">
+                    <option value="">Selecione para rastrear consumo</option>
+                </select>
+            </div>
+            <div class="col-6 col-lg-2">
+                <label asp-for="Inicio" class="form-label">Data inicial</label>
+                <input asp-for="Inicio" class="form-control" type="date" />
+            </div>
+            <div class="col-6 col-lg-2">
+                <label asp-for="Fim" class="form-label">Data final</label>
+                <input asp-for="Fim" class="form-control" type="date" />
+            </div>
+            <div class="col-12 col-lg-2">
+                <button type="submit" class="btn btn-outline-primary w-100">Aplicar filtros</button>
+            </div>
+        </form>
+    </div>
+</div>
+
+<div class="card shadow-sm mb-3">
+    <div class="card-header bg-white d-flex justify-content-between align-items-center">
+        <h2 class="h6 mb-0">F22 - Registro detalhado de entrada</h2>
+        <small class="text-muted">@Model.EntradasDetalhadas.Count registro(s)</small>
+    </div>
+    <div class="card-body p-0">
+        <div class="table-responsive">
+            <table class="table table-hover align-middle mb-0">
+                <thead class="table-light">
+                    <tr>
+                        <th>Data</th>
+                        <th>Insumo</th>
+                        <th>Fornecedor</th>
+                        <th>Lote</th>
+                        <th>Validade</th>
+                        <th>Localização</th>
+                        <th>Quantidade</th>
+                        <th>Documento</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    @if (Model.EntradasDetalhadas.Count == 0)
+                    {
+                        <tr>
+                            <td colspan="8" class="text-center text-muted py-3">Nenhuma entrada encontrada para os filtros selecionados.</td>
+                        </tr>
+                    }
+                    else
+                    {
+                        foreach (var item in Model.EntradasDetalhadas)
+                        {
+                            <tr>
+                                <td>@item.DataMovimentacao.ToLocalTime().ToString("dd/MM/yyyy HH:mm")</td>
+                                <td>@item.InsumoNome</td>
+                                <td>@(string.IsNullOrWhiteSpace(item.FornecedorNome) ? "-" : item.FornecedorNome)</td>
+                                <td>@(string.IsNullOrWhiteSpace(item.Lote) ? "-" : item.Lote)</td>
+                                <td>@(item.DataValidade.HasValue ? item.DataValidade.Value.ToString("dd/MM/yyyy") : "-")</td>
+                                <td>@(string.IsNullOrWhiteSpace(item.Localizacao) ? "-" : item.Localizacao)</td>
+                                <td>@item.Quantidade.ToString("N4")</td>
+                                <td>@(string.IsNullOrWhiteSpace(item.DocumentoReferencia) ? "-" : item.DocumentoReferencia)</td>
+                            </tr>
+                        }
+                    }
+                </tbody>
+            </table>
+        </div>
+    </div>
+</div>
+
+@if (Model.ConsumoPorOrdem is not null)
+{
+    <div class="card shadow-sm mb-3">
+        <div class="card-header bg-white">
+            <h2 class="h6 mb-1">F23 - Consumo por Ordem de Produção</h2>
+            <div class="small text-muted">
+                OP <strong>@Model.ConsumoPorOrdem.OrdemCodigo</strong> | Produto: @Model.ConsumoPorOrdem.ProdutoNome |
+                Planejado: @Model.ConsumoPorOrdem.QuantidadePlanejada.ToString("N4") |
+                Produzido: @Model.ConsumoPorOrdem.QuantidadeProduzida.ToString("N4")
+            </div>
+        </div>
+        <div class="card-body">
+            <h3 class="h6">Total consumido por insumo</h3>
+            <div class="table-responsive mb-3">
+                <table class="table table-sm align-middle mb-0">
+                    <thead class="table-light">
+                        <tr>
+                            <th>Insumo</th>
+                            <th>Quantidade consumida</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                    @if (Model.ConsumoPorOrdem.TotaisPorInsumo.Count == 0)
+                    {
+                        <tr>
+                            <td colspan="2" class="text-center text-muted py-3">Nenhuma baixa de insumo encontrada para esta OP.</td>
+                        </tr>
+                    }
+                    else
+                    {
+                        foreach (var item in Model.ConsumoPorOrdem.TotaisPorInsumo)
+                        {
+                            <tr>
+                                <td>@item.InsumoNome</td>
+                                <td>@item.QuantidadeConsumida.ToString("N4")</td>
+                            </tr>
+                        }
+                    }
+                    </tbody>
+                </table>
+            </div>
+
+            <h3 class="h6">Movimentações vinculadas à OP</h3>
+            <div class="table-responsive">
+                <table class="table table-sm table-hover align-middle mb-0">
+                    <thead class="table-light">
+                        <tr>
+                            <th>Data</th>
+                            <th>Insumo</th>
+                            <th>Lote</th>
+                            <th>Validade</th>
+                            <th>Localização</th>
+                            <th>Quantidade</th>
+                            <th>Motivo</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                    @if (Model.ConsumoPorOrdem.Movimentacoes.Count == 0)
+                    {
+                        <tr>
+                            <td colspan="7" class="text-center text-muted py-3">Sem movimentações de saída para a OP selecionada.</td>
+                        </tr>
+                    }
+                    else
+                    {
+                        foreach (var item in Model.ConsumoPorOrdem.Movimentacoes)
+                        {
+                            <tr>
+                                <td>@item.DataMovimentacao.ToLocalTime().ToString("dd/MM/yyyy HH:mm")</td>
+                                <td>@item.InsumoNome</td>
+                                <td>@(string.IsNullOrWhiteSpace(item.Lote) ? "-" : item.Lote)</td>
+                                <td>@(item.DataValidade.HasValue ? item.DataValidade.Value.ToString("dd/MM/yyyy") : "-")</td>
+                                <td>@(string.IsNullOrWhiteSpace(item.Localizacao) ? "-" : item.Localizacao)</td>
+                                <td>@item.Quantidade.ToString("N4")</td>
+                                <td>@item.Motivo</td>
+                            </tr>
+                        }
+                    }
+                    </tbody>
+                </table>
+            </div>
+        </div>
+    </div>
+}
+
+@if (Model.InsumoId.HasValue)
+{
+    <div class="card shadow-sm mb-3">
+        <div class="card-header bg-white d-flex justify-content-between align-items-center">
+            <h2 class="h6 mb-0">F24 - Histórico por insumo (@Model.InsumoSelecionadoNome)</h2>
+            <small class="text-muted">@Model.HistoricoInsumo.Count registro(s)</small>
+        </div>
+        <div class="card-body p-0">
+            <div class="table-responsive">
+                <table class="table table-hover align-middle mb-0">
+                    <thead class="table-light">
+                        <tr>
+                            <th>Data</th>
+                            <th>Tipo</th>
+                            <th>Quantidade</th>
+                            <th>Lote</th>
+                            <th>Documento</th>
+                            <th>OP</th>
+                            <th>Motivo</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                    @if (Model.HistoricoInsumo.Count == 0)
+                    {
+                        <tr>
+                            <td colspan="7" class="text-center text-muted py-3">Nenhuma movimentação encontrada para este insumo.</td>
+                        </tr>
+                    }
+                    else
+                    {
+                        foreach (var item in Model.HistoricoInsumo)
+                        {
+                            <tr>
+                                <td>@item.DataMovimentacao.ToLocalTime().ToString("dd/MM/yyyy HH:mm")</td>
+                                <td>@item.TipoMovimentacao</td>
+                                <td>@item.Quantidade.ToString("N4")</td>
+                                <td>@(string.IsNullOrWhiteSpace(item.Lote) ? "-" : item.Lote)</td>
+                                <td>@(string.IsNullOrWhiteSpace(item.DocumentoReferencia) ? "-" : item.DocumentoReferencia)</td>
+                                <td>@(string.IsNullOrWhiteSpace(item.OrdemCodigo) ? "-" : item.OrdemCodigo)</td>
+                                <td>@item.Motivo</td>
+                            </tr>
+                        }
+                    }
+                    </tbody>
+                </table>
+            </div>
+        </div>
+    </div>
+}
+
+<div class="card shadow-sm">
+    <div class="card-header bg-white d-flex justify-content-between align-items-center">
+        <h2 class="h6 mb-0">F25 - Controle de lotes</h2>
+        <small class="text-muted">@Model.Lotes.Count lote(s)</small>
+    </div>
+    <div class="card-body p-0">
+        <div class="table-responsive">
+            <table class="table table-hover align-middle mb-0">
+                <thead class="table-light">
+                    <tr>
+                        <th>Insumo</th>
+                        <th>Lote</th>
+                        <th>Validade</th>
+                        <th>Localização</th>
+                        <th>Saldo atual</th>
+                        <th>Atualizado em</th>
+                    </tr>
+                </thead>
+                <tbody>
+                @if (Model.Lotes.Count == 0)
+                {
+                    <tr>
+                        <td colspan="6" class="text-center text-muted py-3">Nenhum lote encontrado para os filtros aplicados.</td>
+                    </tr>
+                }
+                else
+                {
+                    foreach (var lote in Model.Lotes)
+                    {
+                        <tr>
+                            <td>@lote.InsumoNome</td>
+                            <td>@lote.Lote</td>
+                            <td>@(lote.DataValidade.HasValue ? lote.DataValidade.Value.ToString("dd/MM/yyyy") : "-")</td>
+                            <td>@(string.IsNullOrWhiteSpace(lote.Localizacao) ? "-" : lote.Localizacao)</td>
+                            <td>@lote.SaldoAtual.ToString("N4")</td>
+                            <td>@lote.UltimaAtualizacao.ToLocalTime().ToString("dd/MM/yyyy HH:mm")</td>
+                        </tr>
+                    }
+                }
+                </tbody>
+            </table>
+        </div>
+    </div>
+</div>

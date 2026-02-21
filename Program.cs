@@ -16,6 +16,7 @@ builder.Services.AddHttpContextAccessor();
 builder.Services.Configure<AlertaEstoqueOptions>(builder.Configuration.GetSection(AlertaEstoqueOptions.SectionName));
 builder.Services.AddScoped<EstoqueService>();
 builder.Services.AddScoped<InsumoService>();
+builder.Services.AddScoped<RastreabilidadeInsumoService>();
 builder.Services.AddScoped<ProducaoService>();
 builder.Services.AddScoped<AlertaService>();
 builder.Services.AddScoped<RelatorioService>();
