@@ -100,20 +100,20 @@ public class IndexModel : BasePageModel
     private static string GerarCsv(string relatorio, RelatoriosResultado resultado)
     {
         var csv = new StringBuilder();
-        csv.AppendLine($"Relatório: {ObterTituloRelatorio(relatorio)}");
-        csv.AppendLine($"Período;{resultado.InicioUtc:dd/MM/yyyy};{resultado.FimUtc:dd/MM/yyyy}");
+        csv.AppendLine(CsvRow($"Relatório: {ObterTituloRelatorio(relatorio)}"));
+        csv.AppendLine(CsvRow("Período", resultado.InicioUtc.ToString("dd/MM/yyyy"), resultado.FimUtc.ToString("dd/MM/yyyy")));
         csv.AppendLine();
 
         switch (relatorio?.Trim().ToLowerInvariant())
         {
             case "desempenho":
-                csv.AppendLine("Ordem;Produto;Status;Qtd Planejada;Qtd Produzida;% Atendimento;Início Previsto;Fim Previsto;Fim Real");
+                csv.AppendLine(CsvRow("Ordem", "Produto", "Status", "Qtd Planejada", "Qtd Produzida", "% Atendimento", "Início Previsto", "Fim Previsto", "Fim Real"));
                 foreach (var item in resultado.DesempenhoProducao)
                 {
-                    csv.AppendLine(string.Join(";",
+                    csv.AppendLine(CsvRow(
                         item.CodigoOrdem,
                         item.Produto,
-                        item.Status,
+                        item.Status.ToString(),
                         FormatarDecimal(item.QuantidadePlanejada),
                         FormatarDecimal(item.QuantidadeProduzida),
                         FormatarDecimal(item.PercentualAtendimento),
@@ -123,12 +123,12 @@ public class IndexModel : BasePageModel
                 }
                 break;
             case "giro":
-                csv.AppendLine("Item;Tipo;Saldo Atual;Entradas;Saídas;Saldo Médio;Giro");
+                csv.AppendLine(CsvRow("Item", "Tipo", "Saldo Atual", "Entradas", "Saídas", "Saldo Médio", "Giro"));
                 foreach (var item in resultado.GiroEstoque)
                 {
-                    csv.AppendLine(string.Join(";",
+                    csv.AppendLine(CsvRow(
                         item.NomeItem,
-                        item.TipoItem,
+                        item.TipoItem.ToString(),
                         FormatarDecimal(item.SaldoAtual),
                         FormatarDecimal(item.EntradasPeriodo),
                         FormatarDecimal(item.SaidasPeriodo),
@@ -137,10 +137,10 @@ public class IndexModel : BasePageModel
                 }
                 break;
             case "custos":
-                csv.AppendLine("Insumo;Quantidade Consumida;Custo Médio Unitário;Custo Total");
+                csv.AppendLine(CsvRow("Insumo", "Quantidade Consumida", "Custo Médio Unitário", "Custo Total"));
                 foreach (var item in resultado.CustosInsumo)
                 {
-                    csv.AppendLine(string.Join(";",
+                    csv.AppendLine(CsvRow(
                         item.NomeInsumo,
                         FormatarDecimal(item.QuantidadeConsumida),
                         FormatarDecimal(item.CustoMedioUnitario),
@@ -148,12 +148,12 @@ public class IndexModel : BasePageModel
                 }
                 break;
             case "movimentacoes":
-                csv.AppendLine("Data;Tipo;Item;Quantidade;Motivo;Documento;Usuário");
+                csv.AppendLine(CsvRow("Data", "Tipo", "Item", "Quantidade", "Motivo", "Documento", "Usuário"));
                 foreach (var item in resultado.Movimentacoes)
                 {
-                    csv.AppendLine(string.Join(";",
+                    csv.AppendLine(CsvRow(
                         item.DataMovimentacao.ToString("dd/MM/yyyy HH:mm"),
-                        item.TipoMovimentacao,
+                        item.TipoMovimentacao.ToString(),
                         item.NomeItem,
                         FormatarDecimal(item.Quantidade),
                         item.Motivo,
@@ -162,13 +162,13 @@ public class IndexModel : BasePageModel
                 }
                 break;
             default:
-                csv.AppendLine("Dashboard;Valor");
-                csv.AppendLine($"Produção do dia;{FormatarDecimal(resultado.Dashboard.ProducaoDia)}");
-                csv.AppendLine($"Produção da semana;{FormatarDecimal(resultado.Dashboard.ProducaoSemana)}");
-                csv.AppendLine($"Produção do mês;{FormatarDecimal(resultado.Dashboard.ProducaoMes)}");
-                csv.AppendLine($"Valor do estoque atual;{FormatarDecimal(resultado.Dashboard.ValorEstoqueAtual)}");
-                csv.AppendLine($"Alertas ativos;{resultado.Dashboard.AlertasAtivos}");
-                csv.AppendLine($"OPs em andamento;{resultado.Dashboard.OpsEmAndamento}");
+                csv.AppendLine(CsvRow("Dashboard", "Valor"));
+                csv.AppendLine(CsvRow("Produção do dia", FormatarDecimal(resultado.Dashboard.ProducaoDia)));
+                csv.AppendLine(CsvRow("Produção da semana", FormatarDecimal(resultado.Dashboard.ProducaoSemana)));
+                csv.AppendLine(CsvRow("Produção do mês", FormatarDecimal(resultado.Dashboard.ProducaoMes)));
+                csv.AppendLine(CsvRow("Valor do estoque atual", FormatarDecimal(resultado.Dashboard.ValorEstoqueAtual)));
+                csv.AppendLine(CsvRow("Alertas ativos", resultado.Dashboard.AlertasAtivos.ToString(CultureInfo.InvariantCulture)));
+                csv.AppendLine(CsvRow("OPs em andamento", resultado.Dashboard.OpsEmAndamento.ToString(CultureInfo.InvariantCulture)));
                 break;
         }
 
@@ -234,5 +234,22 @@ public class IndexModel : BasePageModel
     private static string FormatarDecimal(decimal valor)
     {
         return valor.ToString("0.####", CultureInfo.InvariantCulture);
+    }
+
+    private static string CsvRow(params string?[] fields)
+    {
+        return string.Join(";", fields.Select(CsvField));
+    }
+
+    private static string CsvField(string? value)
+    {
+        var sanitized = value ?? string.Empty;
+        if (sanitized.Length > 0 && "=+-@".Contains(sanitized[0]))
+        {
+            sanitized = $"'{sanitized}";
+        }
+
+        sanitized = sanitized.Replace("\"", "\"\"");
+        return $"\"{sanitized}\"";
     }
 }
