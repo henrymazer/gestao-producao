@@ -435,13 +435,13 @@ gestao-producao/
 
 ## 10. Critérios de Aceite (Definition of Done)
 
-- [ ] Funcionalidade implementada e funcionando
-- [ ] Validações server-side aplicadas
-- [ ] Layout responsivo (desktop + tablet)
-- [ ] Dados persistidos corretamente no PostgreSQL
-- [ ] Navegação integrada ao menu principal
+- [x] Funcionalidade implementada e funcionando
+- [x] Validações server-side aplicadas
+- [x] Layout responsivo (desktop + tablet)
+- [x] Dados persistidos corretamente no PostgreSQL
+- [x] Navegação integrada ao menu principal
 - [ ] Sem erros no console do navegador
-- [ ] Código limpo e seguindo convenções do projeto
+- [x] Código limpo e seguindo convenções do projeto
 
 ---
 
