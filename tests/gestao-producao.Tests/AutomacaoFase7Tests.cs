@@ -147,6 +147,99 @@ public class AutomacaoFase7Tests
     }
 
     [Fact]
+    public async Task ProducaoService_CalcularNecessidadeInsumosPorPlanosAtivosAsync_NaoDeveDuplicarOrdemEmPlanosAtivos()
+    {
+        await using var connection = CriarConexaoEmMemoria();
+        await using var context = CriarContexto(connection);
+
+        var fornecedor = new Fornecedor
+        {
+            Nome = "Fornecedor Dedupe",
+            Cnpj = "77777777000199"
+        };
+
+        var insumo = new Insumo
+        {
+            Nome = "Insumo Dedupe",
+            UnidadeMedida = "un",
+            Fornecedor = fornecedor,
+            EstoqueMinimo = 0,
+            EstoqueMaximo = 100,
+            PrecoUnitario = 2m
+        };
+
+        var produto = new Produto
+        {
+            Nome = "Produto Dedupe",
+            Codigo = "PROD-DEDUPE-1",
+            UnidadeMedida = "un",
+            PrecoVenda = 10m
+        };
+
+        context.AddRange(fornecedor, insumo, produto);
+        await context.SaveChangesAsync();
+
+        context.ProdutoInsumos.Add(new ProdutoInsumo
+        {
+            ProdutoId = produto.Id,
+            InsumoId = insumo.Id,
+            QuantidadeNecessaria = 2m
+        });
+
+        context.Estoques.Add(new Estoque
+        {
+            InsumoId = insumo.Id,
+            TipoItem = TipoItem.MateriaPrima,
+            QuantidadeAtual = 20m
+        });
+
+        var ordem = new OrdemProducao
+        {
+            Codigo = "OP-F7-DEDUPE",
+            ProdutoId = produto.Id,
+            QuantidadePlanejada = 20m,
+            QuantidadeProduzida = 5m,
+            Status = StatusOrdemProducao.Planejada,
+            DataInicioPrevista = DateTime.UtcNow.Date,
+            DataFimPrevista = DateTime.UtcNow.Date.AddDays(1)
+        };
+
+        context.OrdensProducao.Add(ordem);
+        await context.SaveChangesAsync();
+
+        var planoA = new PlanoProducao
+        {
+            Nome = "Plano Ativo A",
+            DataInicio = DateTime.UtcNow.Date,
+            DataFim = DateTime.UtcNow.Date.AddDays(7),
+            Status = StatusPlano.Ativo
+        };
+        planoA.Itens.Add(new PlanoProducaoItem { OrdemProducaoId = ordem.Id, Prioridade = 1 });
+
+        var planoB = new PlanoProducao
+        {
+            Nome = "Plano Ativo B",
+            DataInicio = DateTime.UtcNow.Date,
+            DataFim = DateTime.UtcNow.Date.AddDays(5),
+            Status = StatusPlano.Ativo
+        };
+        planoB.Itens.Add(new PlanoProducaoItem { OrdemProducaoId = ordem.Id, Prioridade = 2 });
+
+        context.PlanosProducao.AddRange(planoA, planoB);
+        await context.SaveChangesAsync();
+
+        var alertaService = new AlertaService(context, Options.Create(new AlertaEstoqueOptions()));
+        var producaoService = new ProducaoService(context, alertaService);
+
+        var necessidades = await producaoService.CalcularNecessidadeInsumosPorPlanosAtivosAsync();
+        var item = Assert.Single(necessidades);
+
+        Assert.Equal(30m, item.QuantidadeNecessaria);
+        Assert.Equal(20m, item.QuantidadeDisponivel);
+        Assert.Equal(10m, item.QuantidadeFaltante);
+    }
+
+    [Fact]
     public async Task AlertaService_AtualizarAlertasAsync_DeveGerarAlertaDeValidadeAutomaticamente()
     {
         await using var connection = CriarConexaoEmMemoria();

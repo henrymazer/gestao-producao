@@ -610,6 +610,7 @@ public class ProducaoService
                 x.OrdemProducao.Status != StatusOrdemProducao.Concluida)
             .Select(x => new
             {
+                OrdemProducaoId = x.OrdemProducaoId,
                 x.OrdemProducao!.ProdutoId,
                 QuantidadePendente = Math.Max(0m, x.OrdemProducao.QuantidadePlanejada - x.OrdemProducao.QuantidadeProduzida)
             })
@@ -621,7 +622,12 @@ public class ProducaoService
             return [];
         }
 
-        var quantidadePorProduto = ordensPlanejadas
+        var ordensUnicas = ordensPlanejadas
+            .GroupBy(x => x.OrdemProducaoId)
+            .Select(x => x.First())
+            .ToList();
+
+        var quantidadePorProduto = ordensUnicas
             .GroupBy(x => x.ProdutoId)
             .ToDictionary(x => x.Key, x => x.Sum(y => y.QuantidadePendente));
 
