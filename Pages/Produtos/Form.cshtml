@@ -1,0 +1,63 @@
+@page "{id:int?}"
+@model gestao_producao.Pages.Produtos.FormModel
+@{
+    ViewData["Title"] = Model.EhEdicao ? "Editar Produto" : "Novo Produto";
+}
+
+<div class="mb-3">
+    <h1 class="h4 mb-1">@ViewData["Title"]</h1>
+    <p class="text-muted mb-0">Preencha os dados do produto acabado.</p>
+</div>
+
+<div class="card shadow-sm">
+    <div class="card-body">
+        <form method="post">
+            <input type="hidden" asp-for="Produto.Id" />
+
+            <div asp-validation-summary="ModelOnly" class="text-danger mb-3"></div>
+
+            <div class="row g-3">
+                <div class="col-md-6">
+                    <label asp-for="Produto.Nome" class="form-label"></label>
+                    <input asp-for="Produto.Nome" class="form-control" />
+                    <span asp-validation-for="Produto.Nome" class="text-danger"></span>
+                </div>
+                <div class="col-md-3">
+                    <label asp-for="Produto.Codigo" class="form-label"></label>
+                    <input asp-for="Produto.Codigo" class="form-control" />
+                    <span asp-validation-for="Produto.Codigo" class="text-danger"></span>
+                </div>
+                <div class="col-md-3">
+                    <label asp-for="Produto.UnidadeMedida" class="form-label"></label>
+                    <input asp-for="Produto.UnidadeMedida" class="form-control" />
+                    <span asp-validation-for="Produto.UnidadeMedida" class="text-danger"></span>
+                </div>
+                <div class="col-md-4">
+                    <label asp-for="Produto.PrecoVenda" class="form-label"></label>
+                    <input asp-for="Produto.PrecoVenda" class="form-control" type="number" step="0.01" min="0" />
+                    <span asp-validation-for="Produto.PrecoVenda" class="text-danger"></span>
+                </div>
+                <div class="col-md-8">
+                    <label asp-for="Produto.Descricao" class="form-label"></label>
+                    <input asp-for="Produto.Descricao" class="form-control" />
+                    <span asp-validation-for="Produto.Descricao" class="text-danger"></span>
+                </div>
+                <div class="col-12">
+                    <div class="form-check">
+                        <input asp-for="Produto.Ativo" class="form-check-input" />
+                        <label asp-for="Produto.Ativo" class="form-check-label"></label>
+                    </div>
+                </div>
+            </div>
+
+            <div class="d-flex gap-2 mt-4">
+                <button type="submit" class="btn btn-primary">Salvar</button>
+                <a asp-page="/Produtos/Index" class="btn btn-outline-secondary">Cancelar</a>
+            </div>
+        </form>
+    </div>
+</div>
+
+@section Scripts {
+    <partial name="_ValidationScriptsPartial" />
+}

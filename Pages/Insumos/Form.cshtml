@@ -1,0 +1,80 @@
+@page "{id:int?}"
+@model gestao_producao.Pages.Insumos.FormModel
+@{
+    ViewData["Title"] = Model.EhEdicao ? "Editar Insumo" : "Novo Insumo";
+}
+
+<div class="mb-3">
+    <h1 class="h4 mb-1">@ViewData["Title"]</h1>
+    <p class="text-muted mb-0">Informe dados de compra, validade e parâmetros de estoque.</p>
+</div>
+
+<div class="card shadow-sm">
+    <div class="card-body">
+        <form method="post">
+            <input type="hidden" asp-for="Insumo.Id" />
+
+            <div asp-validation-summary="ModelOnly" class="text-danger mb-3"></div>
+
+            <div class="row g-3">
+                <div class="col-md-6">
+                    <label asp-for="Insumo.Nome" class="form-label"></label>
+                    <input asp-for="Insumo.Nome" class="form-control" />
+                    <span asp-validation-for="Insumo.Nome" class="text-danger"></span>
+                </div>
+                <div class="col-md-3">
+                    <label asp-for="Insumo.UnidadeMedida" class="form-label"></label>
+                    <input asp-for="Insumo.UnidadeMedida" class="form-control" />
+                    <span asp-validation-for="Insumo.UnidadeMedida" class="text-danger"></span>
+                </div>
+                <div class="col-md-3">
+                    <label asp-for="Insumo.FornecedorId" class="form-label">Fornecedor</label>
+                    <select asp-for="Insumo.FornecedorId" class="form-select" asp-items="Model.FornecedoresOptions">
+                        <option value="">Selecione...</option>
+                    </select>
+                    <span asp-validation-for="Insumo.FornecedorId" class="text-danger"></span>
+                </div>
+                <div class="col-md-3">
+                    <label asp-for="Insumo.EstoqueMinimo" class="form-label"></label>
+                    <input asp-for="Insumo.EstoqueMinimo" class="form-control" type="number" step="0.0001" min="0" />
+                    <span asp-validation-for="Insumo.EstoqueMinimo" class="text-danger"></span>
+                </div>
+                <div class="col-md-3">
+                    <label asp-for="Insumo.EstoqueMaximo" class="form-label"></label>
+                    <input asp-for="Insumo.EstoqueMaximo" class="form-control" type="number" step="0.0001" min="0" />
+                    <span asp-validation-for="Insumo.EstoqueMaximo" class="text-danger"></span>
+                </div>
+                <div class="col-md-3">
+                    <label asp-for="Insumo.PrecoUnitario" class="form-label"></label>
+                    <input asp-for="Insumo.PrecoUnitario" class="form-control" type="number" step="0.01" min="0" />
+                    <span asp-validation-for="Insumo.PrecoUnitario" class="text-danger"></span>
+                </div>
+                <div class="col-md-3">
+                    <label asp-for="Insumo.DataValidade" class="form-label"></label>
+                    <input asp-for="Insumo.DataValidade" class="form-control" type="date" />
+                    <span asp-validation-for="Insumo.DataValidade" class="text-danger"></span>
+                </div>
+                <div class="col-12">
+                    <label asp-for="Insumo.Descricao" class="form-label"></label>
+                    <input asp-for="Insumo.Descricao" class="form-control" />
+                    <span asp-validation-for="Insumo.Descricao" class="text-danger"></span>
+                </div>
+                <div class="col-12">
+                    <div class="form-check">
+                        <input asp-for="Insumo.Ativo" class="form-check-input" />
+                        <label asp-for="Insumo.Ativo" class="form-check-label"></label>
+                    </div>
+                </div>
+            </div>
+
+            <div class="d-flex gap-2 mt-4">
+                <button type="submit" class="btn btn-primary">Salvar</button>
+                <a asp-page="/Insumos/Index" class="btn btn-outline-secondary">Cancelar</a>
+            </div>
+        </form>
+    </div>
+</div>
+
+@section Scripts {
+    <partial name="_ValidationScriptsPartial" />
+}

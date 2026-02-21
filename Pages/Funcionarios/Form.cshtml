@@ -1,0 +1,59 @@
+@page "{id:int?}"
+@model gestao_producao.Pages.Funcionarios.FormModel
+@{
+    ViewData["Title"] = Model.EhEdicao ? "Editar Funcionário" : "Novo Funcionário";
+}
+
+<div class="mb-3">
+    <h1 class="h4 mb-1">@ViewData["Title"]</h1>
+    <p class="text-muted mb-0">Preencha os dados do colaborador.</p>
+</div>
+
+<div class="card shadow-sm">
+    <div class="card-body">
+        <form method="post">
+            <input type="hidden" asp-for="Funcionario.Id" />
+
+            <div asp-validation-summary="ModelOnly" class="text-danger mb-3"></div>
+
+            <div class="row g-3">
+                <div class="col-md-6">
+                    <label asp-for="Funcionario.Nome" class="form-label"></label>
+                    <input asp-for="Funcionario.Nome" class="form-control" />
+                    <span asp-validation-for="Funcionario.Nome" class="text-danger"></span>
+                </div>
+                <div class="col-md-3">
+                    <label asp-for="Funcionario.Cargo" class="form-label"></label>
+                    <input asp-for="Funcionario.Cargo" class="form-control" />
+                    <span asp-validation-for="Funcionario.Cargo" class="text-danger"></span>
+                </div>
+                <div class="col-md-3">
+                    <label asp-for="Funcionario.Setor" class="form-label"></label>
+                    <input asp-for="Funcionario.Setor" class="form-control" />
+                    <span asp-validation-for="Funcionario.Setor" class="text-danger"></span>
+                </div>
+                <div class="col-md-6">
+                    <div class="form-check">
+                        <input asp-for="Funcionario.Disponivel" class="form-check-input" />
+                        <label asp-for="Funcionario.Disponivel" class="form-check-label"></label>
+                    </div>
+                </div>
+                <div class="col-md-6">
+                    <div class="form-check">
+                        <input asp-for="Funcionario.Ativo" class="form-check-input" />
+                        <label asp-for="Funcionario.Ativo" class="form-check-label"></label>
+                    </div>
+                </div>
+            </div>
+
+            <div class="d-flex gap-2 mt-4">
+                <button type="submit" class="btn btn-primary">Salvar</button>
+                <a asp-page="/Funcionarios/Index" class="btn btn-outline-secondary">Cancelar</a>
+            </div>
+        </form>
+    </div>
+</div>
+
+@section Scripts {
+    <partial name="_ValidationScriptsPartial" />
+}

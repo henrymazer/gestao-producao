@@ -1,7 +1,72 @@
 @page
+@model gestao_producao.Pages.Insumos.IndexModel
 @{
     ViewData["Title"] = "Insumos";
 }
 
-<h1 class="h4">Módulo de Insumos</h1>
-<p class="text-muted">Área inicial para rastreamento e consumo de insumos.</p>
+<div class="d-flex flex-column flex-md-row justify-content-between align-items-md-center gap-2 mb-3">
+    <div>
+        <h1 class="h4 mb-1">Insumos</h1>
+        <p class="text-muted mb-0">Cadastro das matérias-primas e parâmetros de estoque.</p>
+    </div>
+    <a asp-page="/Insumos/Form" class="btn btn-primary">Novo insumo</a>
+</div>
+
+@if (!string.IsNullOrWhiteSpace(Model.MensagemSucesso))
+{
+    <div class="alert alert-success">@Model.MensagemSucesso</div>
+}
+
+<div class="card shadow-sm">
+    <div class="card-body p-0">
+        <div class="table-responsive">
+            <table class="table table-hover align-middle mb-0">
+                <thead class="table-light">
+                    <tr>
+                        <th>Nome</th>
+                        <th>Fornecedor</th>
+                        <th>Unidade</th>
+                        <th>Estoque Min/Máx</th>
+                        <th>Preço Unitário</th>
+                        <th>Status</th>
+                        <th class="text-end">Ações</th>
+                    </tr>
+                </thead>
+                <tbody>
+                @if (Model.Insumos.Count == 0)
+                {
+                    <tr>
+                        <td colspan="7" class="text-center text-muted py-4">Nenhum insumo cadastrado.</td>
+                    </tr>
+                }
+                else
+                {
+                    foreach (var item in Model.Insumos)
+                    {
+                        <tr>
+                            <td>@item.Nome</td>
+                            <td>@item.Fornecedor?.Nome</td>
+                            <td>@item.UnidadeMedida</td>
+                            <td>@item.EstoqueMinimo.ToString("N2") / @item.EstoqueMaximo.ToString("N2")</td>
+                            <td>@item.PrecoUnitario.ToString("N2")</td>
+                            <td>
+                                <span class="badge @(item.Ativo ? "bg-success" : "bg-secondary")">
+                                    @(item.Ativo ? "Ativo" : "Inativo")
+                                </span>
+                            </td>
+                            <td class="text-end">
+                                <div class="d-inline-flex gap-2">
+                                    <a asp-page="/Insumos/Form" asp-route-id="@item.Id" class="btn btn-sm btn-outline-primary">Editar</a>
+                                    <form method="post" asp-page-handler="Delete" asp-route-id="@item.Id" onsubmit="return confirm('Confirma exclusão do insumo?');">
+                                        <button type="submit" class="btn btn-sm btn-outline-danger">Excluir</button>
+                                    </form>
+                                </div>
+                            </td>
+                        </tr>
+                    }
+                }
+                </tbody>
+            </table>
+        </div>
+    </div>
+</div>

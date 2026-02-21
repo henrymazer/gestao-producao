@@ -1,0 +1,105 @@
+@page "{idEdicao:int?}"
+@model gestao_producao.Pages.Cadastros.BomModel
+@{
+    ViewData["Title"] = "Composição de Produto (BOM)";
+}
+
+<div class="mb-3">
+    <h1 class="h4 mb-1">Composição de Produto (BOM)</h1>
+    <p class="text-muted mb-0">Defina os insumos necessários para cada produto acabado.</p>
+</div>
+
+@if (!string.IsNullOrWhiteSpace(Model.MensagemSucesso))
+{
+    <div class="alert alert-success">@Model.MensagemSucesso</div>
+}
+
+<div class="card shadow-sm mb-4">
+    <div class="card-header bg-white">
+        <strong>@(Model.ProdutoInsumo.Id == 0 ? "Nova composição" : "Editar composição")</strong>
+    </div>
+    <div class="card-body">
+        <form method="post" asp-page-handler="Salvar">
+            <input type="hidden" asp-for="ProdutoInsumo.Id" />
+            <div asp-validation-summary="ModelOnly" class="text-danger mb-3"></div>
+
+            <div class="row g-3">
+                <div class="col-md-4">
+                    <label asp-for="ProdutoInsumo.ProdutoId" class="form-label">Produto</label>
+                    <select asp-for="ProdutoInsumo.ProdutoId" class="form-select" asp-items="Model.ProdutosOptions">
+                        <option value="">Selecione...</option>
+                    </select>
+                    <span asp-validation-for="ProdutoInsumo.ProdutoId" class="text-danger"></span>
+                </div>
+                <div class="col-md-4">
+                    <label asp-for="ProdutoInsumo.InsumoId" class="form-label">Insumo</label>
+                    <select asp-for="ProdutoInsumo.InsumoId" class="form-select" asp-items="Model.InsumosOptions">
+                        <option value="">Selecione...</option>
+                    </select>
+                    <span asp-validation-for="ProdutoInsumo.InsumoId" class="text-danger"></span>
+                </div>
+                <div class="col-md-4">
+                    <label asp-for="ProdutoInsumo.QuantidadeNecessaria" class="form-label"></label>
+                    <input asp-for="ProdutoInsumo.QuantidadeNecessaria" class="form-control" type="number" step="0.0001" min="0.0001" />
+                    <span asp-validation-for="ProdutoInsumo.QuantidadeNecessaria" class="text-danger"></span>
+                </div>
+            </div>
+
+            <div class="d-flex gap-2 mt-4">
+                <button type="submit" class="btn btn-primary">Salvar composição</button>
+                @if (Model.ProdutoInsumo.Id != 0)
+                {
+                    <a asp-page="/Cadastros/Bom" class="btn btn-outline-secondary">Cancelar edição</a>
+                }
+            </div>
+        </form>
+    </div>
+</div>
+
+<div class="card shadow-sm">
+    <div class="card-body p-0">
+        <div class="table-responsive">
+            <table class="table table-hover align-middle mb-0">
+                <thead class="table-light">
+                    <tr>
+                        <th>Produto</th>
+                        <th>Insumo</th>
+                        <th>Quantidade Necessária</th>
+                        <th class="text-end">Ações</th>
+                    </tr>
+                </thead>
+                <tbody>
+                @if (Model.Itens.Count == 0)
+                {
+                    <tr>
+                        <td colspan="4" class="text-center text-muted py-4">Nenhuma composição cadastrada.</td>
+                    </tr>
+                }
+                else
+                {
+                    foreach (var item in Model.Itens)
+                    {
+                        <tr>
+                            <td>@item.Produto?.Nome</td>
+                            <td>@item.Insumo?.Nome</td>
+                            <td>@item.QuantidadeNecessaria.ToString("N4")</td>
+                            <td class="text-end">
+                                <div class="d-inline-flex gap-2">
+                                    <a asp-page="/Cadastros/Bom" asp-route-idEdicao="@item.Id" class="btn btn-sm btn-outline-primary">Editar</a>
+                                    <form method="post" asp-page-handler="Excluir" asp-route-id="@item.Id" onsubmit="return confirm('Confirma exclusão da composição?');">
+                                        <button type="submit" class="btn btn-sm btn-outline-danger">Excluir</button>
+                                    </form>
+                                </div>
+                            </td>
+                        </tr>
+                    }
+                }
+                </tbody>
+            </table>
+        </div>
+    </div>
+</div>
+
+@section Scripts {
+    <partial name="_ValidationScriptsPartial" />
+}

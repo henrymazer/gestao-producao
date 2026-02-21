@@ -1,0 +1,58 @@
+@page "{id:int?}"
+@model gestao_producao.Pages.Fornecedores.FormModel
+@{
+    ViewData["Title"] = Model.EhEdicao ? "Editar Fornecedor" : "Novo Fornecedor";
+}
+
+<div class="mb-3">
+    <h1 class="h4 mb-1">@ViewData["Title"]</h1>
+    <p class="text-muted mb-0">Preencha os dados do fornecedor.</p>
+</div>
+
+<div class="card shadow-sm">
+    <div class="card-body">
+        <form method="post">
+            <input type="hidden" asp-for="Fornecedor.Id" />
+
+            <div asp-validation-summary="ModelOnly" class="text-danger mb-3"></div>
+
+            <div class="row g-3">
+                <div class="col-md-6">
+                    <label asp-for="Fornecedor.Nome" class="form-label"></label>
+                    <input asp-for="Fornecedor.Nome" class="form-control" />
+                    <span asp-validation-for="Fornecedor.Nome" class="text-danger"></span>
+                </div>
+                <div class="col-md-6">
+                    <label asp-for="Fornecedor.Cnpj" class="form-label"></label>
+                    <input asp-for="Fornecedor.Cnpj" class="form-control" />
+                    <span asp-validation-for="Fornecedor.Cnpj" class="text-danger"></span>
+                </div>
+                <div class="col-md-6">
+                    <label asp-for="Fornecedor.Contato" class="form-label"></label>
+                    <input asp-for="Fornecedor.Contato" class="form-control" />
+                    <span asp-validation-for="Fornecedor.Contato" class="text-danger"></span>
+                </div>
+                <div class="col-md-6">
+                    <label asp-for="Fornecedor.Endereco" class="form-label"></label>
+                    <input asp-for="Fornecedor.Endereco" class="form-control" />
+                    <span asp-validation-for="Fornecedor.Endereco" class="text-danger"></span>
+                </div>
+                <div class="col-12">
+                    <div class="form-check">
+                        <input asp-for="Fornecedor.Ativo" class="form-check-input" />
+                        <label asp-for="Fornecedor.Ativo" class="form-check-label"></label>
+                    </div>
+                </div>
+            </div>
+
+            <div class="d-flex gap-2 mt-4">
+                <button type="submit" class="btn btn-primary">Salvar</button>
+                <a asp-page="/Fornecedores/Index" class="btn btn-outline-secondary">Cancelar</a>
+            </div>
+        </form>
+    </div>
+</div>
+
+@section Scripts {
+    <partial name="_ValidationScriptsPartial" />
+}

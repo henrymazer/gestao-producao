@@ -1,15 +1,15 @@
 @page
-@model gestao_producao.Pages.Fornecedores.IndexModel
+@model gestao_producao.Pages.Produtos.IndexModel
 @{
-    ViewData["Title"] = "Fornecedores";
+    ViewData["Title"] = "Produtos";
 }
 
 <div class="d-flex flex-column flex-md-row justify-content-between align-items-md-center gap-2 mb-3">
     <div>
-        <h1 class="h4 mb-1">Fornecedores</h1>
-        <p class="text-muted mb-0">Cadastro e manutenção dos fornecedores da fábrica.</p>
+        <h1 class="h4 mb-1">Produtos</h1>
+        <p class="text-muted mb-0">Cadastro de produtos acabados.</p>
     </div>
-    <a asp-page="/Fornecedores/Form" class="btn btn-primary">Novo fornecedor</a>
+    <a asp-page="/Produtos/Form" class="btn btn-primary">Novo produto</a>
 </div>
 
 @if (!string.IsNullOrWhiteSpace(Model.MensagemSucesso))
@@ -24,27 +24,29 @@
                 <thead class="table-light">
                     <tr>
                         <th>Nome</th>
-                        <th>CNPJ</th>
-                        <th>Contato</th>
+                        <th>Código</th>
+                        <th>Unidade</th>
+                        <th>Preço Venda</th>
                         <th>Status</th>
                         <th class="text-end">Ações</th>
                     </tr>
                 </thead>
                 <tbody>
-                @if (Model.Fornecedores.Count == 0)
+                @if (Model.Produtos.Count == 0)
                 {
                     <tr>
-                        <td colspan="5" class="text-center text-muted py-4">Nenhum fornecedor cadastrado.</td>
+                        <td colspan="6" class="text-center text-muted py-4">Nenhum produto cadastrado.</td>
                     </tr>
                 }
                 else
                 {
-                    foreach (var item in Model.Fornecedores)
+                    foreach (var item in Model.Produtos)
                     {
                         <tr>
                             <td>@item.Nome</td>
-                            <td>@item.Cnpj</td>
-                            <td>@(string.IsNullOrWhiteSpace(item.Contato) ? "-" : item.Contato)</td>
+                            <td>@item.Codigo</td>
+                            <td>@item.UnidadeMedida</td>
+                            <td>@item.PrecoVenda.ToString("N2")</td>
                             <td>
                                 <span class="badge @(item.Ativo ? "bg-success" : "bg-secondary")">
                                     @(item.Ativo ? "Ativo" : "Inativo")
@@ -52,8 +54,8 @@
                             </td>
                             <td class="text-end">
                                 <div class="d-inline-flex gap-2">
-                                    <a asp-page="/Fornecedores/Form" asp-route-id="@item.Id" class="btn btn-sm btn-outline-primary">Editar</a>
-                                    <form method="post" asp-page-handler="Delete" asp-route-id="@item.Id" onsubmit="return confirm('Confirma exclusão do fornecedor?');">
+                                    <a asp-page="/Produtos/Form" asp-route-id="@item.Id" class="btn btn-sm btn-outline-primary">Editar</a>
+                                    <form method="post" asp-page-handler="Delete" asp-route-id="@item.Id" onsubmit="return confirm('Confirma exclusão do produto?');">
                                         <button type="submit" class="btn btn-sm btn-outline-danger">Excluir</button>
                                     </form>
                                 </div>

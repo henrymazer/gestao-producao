@@ -327,12 +327,12 @@ gestao-producao/
 ### Fase 2 — Cadastros Base (Semana 2-3)
 > Objetivo: CRUDs fundamentais que alimentam o sistema
 
-- [ ] F01 — CRUD Fornecedores
-- [ ] F02 — CRUD Insumos
-- [ ] F03 — CRUD Produtos
-- [ ] F04 — CRUD Equipamentos
-- [ ] F05 — CRUD Funcionários
-- [ ] F06 — Composição de Produto (BOM)
+- [x] F01 — CRUD Fornecedores
+- [x] F02 — CRUD Insumos
+- [x] F03 — CRUD Produtos
+- [x] F04 — CRUD Equipamentos
+- [x] F05 — CRUD Funcionários
+- [x] F06 — Composição de Produto (BOM)
 
 ### Fase 3 — Gestão de Estoque (Semana 3-4)
 > Objetivo: Controle completo de estoque
