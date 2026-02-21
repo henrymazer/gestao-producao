@@ -337,13 +337,13 @@ gestao-producao/
 ### Fase 3 — Gestão de Estoque (Semana 3-4)
 > Objetivo: Controle completo de estoque
 
-- [ ] F14 — Tela de visualização de estoque
-- [ ] F15 — Entrada de estoque
-- [ ] F16 — Saída de estoque
-- [ ] F17 — Ajustes de inventário
-- [ ] F18/F19 — Sistema de alertas (mínimo/máximo)
-- [ ] F20 — Alerta de validade
-- [ ] F21 — Histórico de movimentações
+- [x] F14 — Tela de visualização de estoque
+- [x] F15 — Entrada de estoque
+- [x] F16 — Saída de estoque
+- [x] F17 — Ajustes de inventário
+- [x] F18/F19 — Sistema de alertas (mínimo/máximo)
+- [x] F20 — Alerta de validade
+- [x] F21 — Histórico de movimentações
 
 ### Fase 4 — Planejamento de Produção (Semana 4-6)
 > Objetivo: Planejamento e execução de produção

@@ -1,7 +1,144 @@
 @page
+@using gestao_producao.Models.Enums
+@model gestao_producao.Pages.Estoque.IndexModel
 @{
-    ViewData["Title"] = "Estoque";
+    ViewData["Title"] = "Visão de Estoque";
 }
 
-<h1 class="h4">Módulo de Estoque</h1>
-<p class="text-muted">Tela base para evolução do controle de estoque.</p>
+<div class="d-flex flex-column flex-md-row justify-content-between align-items-md-center gap-2 mb-3">
+    <div>
+        <h1 class="h4 mb-1">Gestão de Estoque</h1>
+        <p class="text-muted mb-0">Visão atual dos itens em estoque, com monitoramento de alertas automáticos.</p>
+    </div>
+    <div class="d-flex gap-2">
+        <a asp-page="/Estoque/Movimentar" class="btn btn-primary">Nova movimentação</a>
+        <a asp-page="/Estoque/Movimentacoes" class="btn btn-outline-secondary">Histórico</a>
+    </div>
+</div>
+
+<partial name="_StatusMessages" model="Model" />
+
+<div class="card shadow-sm mb-3">
+    <div class="card-body">
+        <form method="get" class="row g-2 align-items-end">
+            <div class="col-12 col-md-5">
+                <label asp-for="Filtro" class="form-label">Busca por item/lote/localização</label>
+                <input asp-for="Filtro" class="form-control" placeholder="Ex.: Açúcar, lote A1, Depósito 2" />
+            </div>
+            <div class="col-12 col-md-4">
+                <label asp-for="TipoItem" class="form-label">Tipo do item</label>
+                <select asp-for="TipoItem" class="form-select"
+                        asp-items="Html.GetEnumSelectList<TipoItem>()">
+                    <option value="">Todos</option>
+                </select>
+            </div>
+            <div class="col-12 col-md-3 d-flex gap-2">
+                <button type="submit" class="btn btn-outline-primary w-100">Filtrar</button>
+                <a asp-page="/Estoque/Index" class="btn btn-outline-secondary w-100">Limpar</a>
+            </div>
+        </form>
+    </div>
+</div>
+
+<div class="card shadow-sm mb-3">
+    <div class="card-header bg-white">
+        <h2 class="h6 mb-0">Alertas ativos (@Model.AlertasAtivos.Count)</h2>
+    </div>
+    <div class="card-body p-0">
+        <div class="table-responsive">
+            <table class="table table-sm align-middle mb-0">
+                <thead class="table-light">
+                    <tr>
+                        <th>Tipo</th>
+                        <th>Item</th>
+                        <th>Mensagem</th>
+                        <th>Criado em</th>
+                        <th class="text-end">Ação</th>
+                    </tr>
+                </thead>
+                <tbody>
+                @if (Model.AlertasAtivos.Count == 0)
+                {
+                    <tr>
+                        <td colspan="5" class="text-center text-muted py-3">Sem alertas ativos.</td>
+                    </tr>
+                }
+                else
+                {
+                    foreach (var alerta in Model.AlertasAtivos)
+                    {
+                        <tr>
+                            <td>@alerta.TipoAlerta</td>
+                            <td>@alerta.NomeItem</td>
+                            <td>@alerta.Mensagem</td>
+                            <td>@alerta.CriadoEm.ToLocalTime().ToString("dd/MM/yyyy HH:mm")</td>
+                            <td class="text-end">
+                                <form method="post" asp-page-handler="MarcarAlertaLido" asp-route-id="@alerta.Id">
+                                    <button type="submit" class="btn btn-sm btn-outline-success">Marcar como lido</button>
+                                </form>
+                            </td>
+                        </tr>
+                    }
+                }
+                </tbody>
+            </table>
+        </div>
+    </div>
+</div>
+
+<div class="card shadow-sm">
+    <div class="card-header bg-white">
+        <h2 class="h6 mb-0">Itens em estoque (@Model.Estoques.Count)</h2>
+    </div>
+    <div class="card-body p-0">
+        <div class="table-responsive">
+            <table class="table table-hover align-middle mb-0">
+                <thead class="table-light">
+                    <tr>
+                        <th>Item</th>
+                        <th>Tipo</th>
+                        <th>Saldo</th>
+                        <th>Faixa Min/Máx</th>
+                        <th>Lote</th>
+                        <th>Validade</th>
+                        <th>Localização</th>
+                        <th>Atualizado</th>
+                    </tr>
+                </thead>
+                <tbody>
+                @if (Model.Estoques.Count == 0)
+                {
+                    <tr>
+                        <td colspan="8" class="text-center text-muted py-4">Nenhum item encontrado para o filtro informado.</td>
+                    </tr>
+                }
+                else
+                {
+                    foreach (var item in Model.Estoques)
+                    {
+                        <tr>
+                            <td>@item.NomeItem</td>
+                            <td>@item.TipoItem</td>
+                            <td>@item.QuantidadeAtual.ToString("N2")</td>
+                            <td>
+                                @if (item.EstoqueMinimo.HasValue && item.EstoqueMaximo.HasValue)
+                                {
+                                    <span>@item.EstoqueMinimo.Value.ToString("N2") / @item.EstoqueMaximo.Value.ToString("N2")</span>
+                                }
+                                else
+                                {
+                                    <span class="text-muted">-</span>
+                                }
+                            </td>
+                            <td>@(string.IsNullOrWhiteSpace(item.Lote) ? "-" : item.Lote)</td>
+                            <td>@(item.DataValidade.HasValue ? item.DataValidade.Value.ToString("dd/MM/yyyy") : "-")</td>
+                            <td>@(string.IsNullOrWhiteSpace(item.Localizacao) ? "-" : item.Localizacao)</td>
+                            <td>@item.AtualizadoEm.ToLocalTime().ToString("dd/MM/yyyy HH:mm")</td>
+                        </tr>
+                    }
+                }
+                </tbody>
+            </table>
+        </div>
+    </div>
+</div>
