@@ -60,16 +60,19 @@ public class AppDbContextAuditoriaTests
     {
         await using var connection = CriarConexaoEmMemoria();
         var interceptor = new FalhaAoPersistirAuditoriaInterceptor();
+        var fornecedor = new Fornecedor
+        {
+            Nome = "Fornecedor com erro",
+            Cnpj = "22222222000199"
+        };
 
         await using (var context = CriarContexto(connection, interceptor))
         {
-            context.Fornecedores.Add(new Fornecedor
-            {
-                Nome = "Fornecedor com erro",
-                Cnpj = "22222222000199"
-            });
+            context.Fornecedores.Add(fornecedor);
 
             await Assert.ThrowsAsync<InvalidOperationException>(() => context.SaveChangesAsync());
+
+            Assert.Equal(EntityState.Detached, context.Entry(fornecedor).State);
         }
 
         await using (var validacao = CriarContexto(connection))

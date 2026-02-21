@@ -197,6 +197,12 @@ public class AppDbContext : IdentityDbContext<UsuarioAdmin>
         catch
         {
             transacao?.Rollback();
+
+            if (abriuTransacao && acceptAllChangesOnSuccess)
+            {
+                ChangeTracker.Clear();
+            }
+
             throw;
         }
         finally
@@ -240,6 +246,11 @@ public class AppDbContext : IdentityDbContext<UsuarioAdmin>
             if (transacao is not null)
             {
                 await transacao.RollbackAsync(cancellationToken);
+            }
+
+            if (abriuTransacao && acceptAllChangesOnSuccess)
+            {
+                ChangeTracker.Clear();
             }
 
             throw;
