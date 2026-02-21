@@ -49,7 +49,15 @@ public class IndexModel : BasePageModel
 
     public async Task<IActionResult> OnPostConcluirAsync(int id, CancellationToken cancellationToken)
     {
-        var resultado = await _producaoService.ConcluirOrdemAsync(id, null, User, cancellationToken);
+        var ordem = await _producaoService.ObterOrdemAsync(id, cancellationToken);
+        if (ordem is null)
+        {
+            MensagemErro = "Ordem de produção não encontrada.";
+            return RedirectToPage();
+        }
+
+        decimal? quantidadeParaConcluir = ordem.QuantidadeProduzida > 0 ? ordem.QuantidadeProduzida : null;
+        var resultado = await _producaoService.ConcluirOrdemAsync(id, quantidadeParaConcluir, User, cancellationToken);
         if (!resultado.Sucesso)
         {
             MensagemErro = resultado.Erro;

@@ -57,6 +57,7 @@
                     <select asp-for="Ordem.Status" class="form-select">
                         <option value="@StatusOrdemProducao.Planejada">Planejada</option>
                         <option value="@StatusOrdemProducao.EmAndamento">EmAndamento</option>
+                        <option value="@StatusOrdemProducao.Concluida">Concluida</option>
                         <option value="@StatusOrdemProducao.Cancelada">Cancelada</option>
                     </select>
                     <span asp-validation-for="Ordem.Status" class="text-danger"></span>
