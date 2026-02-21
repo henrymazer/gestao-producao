@@ -313,16 +313,16 @@ gestao-producao/
 
 ## 6. Fases de Desenvolvimento
 
-### Fase 1 — Fundação (Semana 1-2)
+### Fase 1 — Fundação (Semana 1-2) ✅
 > Objetivo: Estrutura base, banco de dados, layout
 
-- [ ] Configurar Entity Framework Core + PostgreSQL (Neon)
-- [ ] Criar DbContext com todas as entidades
-- [ ] Gerar Migration inicial e aplicar no banco
-- [ ] Configurar ASP.NET Core Identity (autenticação)
-- [ ] Criar layout principal com Bootstrap 5 (sidebar + navbar)
-- [ ] Implementar páginas de Login/Registro
-- [ ] Configurar menu de navegação por módulos
+- [x] Configurar Entity Framework Core + PostgreSQL (Neon)
+- [x] Criar DbContext com todas as entidades
+- [x] Gerar Migration inicial e aplicar no banco
+- [x] Configurar ASP.NET Core Identity (autenticação)
+- [x] Criar layout principal com Bootstrap 5 (sidebar + navbar)
+- [x] Implementar páginas de Login/Registro
+- [x] Configurar menu de navegação por módulos
 
 ### Fase 2 — Cadastros Base (Semana 2-3)
 > Objetivo: CRUDs fundamentais que alimentam o sistema
