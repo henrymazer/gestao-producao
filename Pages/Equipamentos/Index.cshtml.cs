@@ -20,6 +20,9 @@ public class IndexModel : PageModel
     [TempData]
     public string? MensagemSucesso { get; set; }
 
+    [TempData]
+    public string? MensagemErro { get; set; }
+
     public async Task OnGetAsync()
     {
         Equipamentos = await _context.Equipamentos
@@ -39,7 +42,7 @@ public class IndexModel : PageModel
         var possuiOrdens = await _context.OrdensProducao.AnyAsync(x => x.EquipamentoId == id);
         if (possuiOrdens)
         {
-            TempData["MensagemSucesso"] = "Equipamento não pode ser excluído porque possui ordens vinculadas.";
+            TempData["MensagemErro"] = "Equipamento não pode ser excluído porque possui ordens vinculadas.";
             return RedirectToPage();
         }
 

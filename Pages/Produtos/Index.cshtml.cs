@@ -20,6 +20,9 @@ public class IndexModel : PageModel
     [TempData]
     public string? MensagemSucesso { get; set; }
 
+    [TempData]
+    public string? MensagemErro { get; set; }
+
     public async Task OnGetAsync()
     {
         Produtos = await _context.Produtos
@@ -42,7 +45,7 @@ public class IndexModel : PageModel
 
         if (possuiDependencias)
         {
-            TempData["MensagemSucesso"] = "Produto não pode ser excluído porque possui vínculos no sistema.";
+            TempData["MensagemErro"] = "Produto não pode ser excluído porque possui vínculos no sistema.";
             return RedirectToPage();
         }
 
