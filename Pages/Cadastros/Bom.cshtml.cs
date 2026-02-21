@@ -65,6 +65,15 @@ public class BomModel : PageModel
             {
                 return NotFound();
             }
+
+            if (itemDb.ProdutoId != ProdutoInsumo.ProdutoId || itemDb.InsumoId != ProdutoInsumo.InsumoId)
+            {
+                ModelState.AddModelError(string.Empty, "Para trocar produto ou insumo, exclua a composição atual e cadastre uma nova.");
+                ProdutoInsumo.ProdutoId = itemDb.ProdutoId;
+                ProdutoInsumo.InsumoId = itemDb.InsumoId;
+                await CarregarDadosTelaAsync(ProdutoInsumo.ProdutoId, ProdutoInsumo.InsumoId);
+                return Page();
+            }
         }
 
         if (ProdutoInsumo.QuantidadeNecessaria <= 0)
@@ -120,18 +129,7 @@ public class BomModel : PageModel
         }
         else
         {
-            var itemDbEdicao = itemDb!;
-
-            if (itemDbEdicao.ProdutoId != ProdutoInsumo.ProdutoId || itemDbEdicao.InsumoId != ProdutoInsumo.InsumoId)
-            {
-                ModelState.AddModelError(string.Empty, "Para trocar produto ou insumo, exclua a composição atual e cadastre uma nova.");
-                ProdutoInsumo.ProdutoId = itemDbEdicao.ProdutoId;
-                ProdutoInsumo.InsumoId = itemDbEdicao.InsumoId;
-                await CarregarDadosTelaAsync(ProdutoInsumo.ProdutoId, ProdutoInsumo.InsumoId);
-                return Page();
-            }
-
-            itemDbEdicao.QuantidadeNecessaria = ProdutoInsumo.QuantidadeNecessaria;
+            itemDb!.QuantidadeNecessaria = ProdutoInsumo.QuantidadeNecessaria;
 
             TempData["MensagemSucesso"] = "Composição atualizada com sucesso.";
         }
