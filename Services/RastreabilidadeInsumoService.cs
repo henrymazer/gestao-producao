@@ -175,22 +175,29 @@ public class RastreabilidadeInsumoService
             .Distinct(StringComparer.OrdinalIgnoreCase)
             .ToList();
 
-        var codigosOrdens = documentosReferencia.Count == 0
-            ? new HashSet<string>(StringComparer.OrdinalIgnoreCase)
+        var documentosReferenciaNormalizados = documentosReferencia
+            .Select(x => x!.ToUpperInvariant())
+            .Distinct(StringComparer.Ordinal)
+            .ToList();
+
+        var codigosOrdensNormalizados = documentosReferenciaNormalizados.Count == 0
+            ? new HashSet<string>(StringComparer.Ordinal)
             : (await _context.OrdensProducao
                 .AsNoTracking()
-                .Where(x => documentosReferencia.Contains(x.Codigo))
-                .Select(x => x.Codigo)
+                .Where(x => documentosReferenciaNormalizados.Contains(x.Codigo.ToUpper()))
+                .Select(x => x.Codigo.ToUpper())
                 .ToListAsync(cancellationToken))
-            .ToHashSet(StringComparer.OrdinalIgnoreCase);
+            .ToHashSet(StringComparer.Ordinal);
 
         return movimentacoes
             .Select(x =>
             {
-                var ordemCodigo = string.IsNullOrWhiteSpace(x.DocumentoReferencia)
+                var documentoTrimado = x.DocumentoReferencia?.Trim();
+                var documentoNormalizado = documentoTrimado?.ToUpperInvariant();
+                var ordemCodigo = string.IsNullOrWhiteSpace(documentoNormalizado)
                     ? null
-                    : codigosOrdens.Contains(x.DocumentoReferencia.Trim())
-                        ? x.DocumentoReferencia.Trim()
+                    : codigosOrdensNormalizados.Contains(documentoNormalizado)
+                        ? documentoTrimado
                         : null;
 
                 return new HistoricoInsumoMovimentacao(
