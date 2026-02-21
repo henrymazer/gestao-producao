@@ -1,0 +1,11 @@
+@model gestao_producao.Pages.BasePageModel
+
+@if (!string.IsNullOrWhiteSpace(Model.MensagemSucesso))
+{
+    <div class="alert alert-success">@Model.MensagemSucesso</div>
+}
+
+@if (!string.IsNullOrWhiteSpace(Model.MensagemErro))
+{
+    <div class="alert alert-danger">@Model.MensagemErro</div>
+}

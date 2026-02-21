@@ -10,7 +10,7 @@ using Microsoft.EntityFrameworkCore;
 namespace gestao_producao.Pages.Cadastros;
 
 [Authorize]
-public class BomModel : PageModel
+public class BomModel : BasePageModel
 {
     private readonly AppDbContext _context;
 
@@ -25,12 +25,6 @@ public class BomModel : PageModel
     public IList<ProdutoInsumo> Itens { get; private set; } = new List<ProdutoInsumo>();
     public List<SelectListItem> ProdutosOptions { get; private set; } = new();
     public List<SelectListItem> InsumosOptions { get; private set; } = new();
-
-    [TempData]
-    public string? MensagemSucesso { get; set; }
-
-    [TempData]
-    public string? MensagemErro { get; set; }
 
     public async Task OnGetAsync(int? idEdicao)
     {

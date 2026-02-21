@@ -6,7 +6,7 @@ using Microsoft.EntityFrameworkCore;
 
 namespace gestao_producao.Pages.Funcionarios;
 
-public class IndexModel : PageModel
+public class IndexModel : BasePageModel
 {
     private readonly AppDbContext _context;
 
@@ -16,9 +16,6 @@ public class IndexModel : PageModel
     }
 
     public IList<Funcionario> Funcionarios { get; private set; } = new List<Funcionario>();
-
-    [TempData]
-    public string? MensagemSucesso { get; set; }
 
     public async Task OnGetAsync()
     {

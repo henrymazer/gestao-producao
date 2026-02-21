@@ -6,7 +6,7 @@ using Microsoft.EntityFrameworkCore;
 
 namespace gestao_producao.Pages.Produtos;
 
-public class IndexModel : PageModel
+public class IndexModel : BasePageModel
 {
     private readonly AppDbContext _context;
 
@@ -16,12 +16,6 @@ public class IndexModel : PageModel
     }
 
     public IList<Produto> Produtos { get; private set; } = new List<Produto>();
-
-    [TempData]
-    public string? MensagemSucesso { get; set; }
-
-    [TempData]
-    public string? MensagemErro { get; set; }
 
     public async Task OnGetAsync()
     {

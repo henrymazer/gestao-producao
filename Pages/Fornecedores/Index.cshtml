@@ -12,15 +12,7 @@
     <a asp-page="/Fornecedores/Form" class="btn btn-primary">Novo fornecedor</a>
 </div>
 
-@if (!string.IsNullOrWhiteSpace(Model.MensagemSucesso))
-{
-    <div class="alert alert-success">@Model.MensagemSucesso</div>
-}
-
-@if (!string.IsNullOrWhiteSpace(Model.MensagemErro))
-{
-    <div class="alert alert-danger">@Model.MensagemErro</div>
-}
+<partial name="_StatusMessages" model="Model" />
 
 <div class="card shadow-sm">
     <div class="card-body p-0">

@@ -12,10 +12,7 @@
     <a asp-page="/Funcionarios/Form" class="btn btn-primary">Novo funcionário</a>
 </div>
 
-@if (!string.IsNullOrWhiteSpace(Model.MensagemSucesso))
-{
-    <div class="alert alert-success">@Model.MensagemSucesso</div>
-}
+<partial name="_StatusMessages" model="Model" />
 
 <div class="card shadow-sm">
     <div class="card-body p-0">
