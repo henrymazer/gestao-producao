@@ -6,7 +6,7 @@ Projeto ASP.NET Core para gerenciamento de produção.
 
 ## Pré-requisitos
 
-- .NET SDK 9 (ou versão compatível com o projeto)
+- .NET SDK 10 (ou versão compatível com o projeto)
 
 ## Como executar
 
