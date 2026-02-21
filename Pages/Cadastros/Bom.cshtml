@@ -14,6 +14,11 @@
     <div class="alert alert-success">@Model.MensagemSucesso</div>
 }
 
+@if (!string.IsNullOrWhiteSpace(Model.MensagemErro))
+{
+    <div class="alert alert-danger">@Model.MensagemErro</div>
+}
+
 <div class="card shadow-sm mb-4">
     <div class="card-header bg-white">
         <strong>@(Model.ProdutoInsumo.Id == 0 ? "Nova composição" : "Editar composição")</strong>
@@ -26,16 +31,32 @@
             <div class="row g-3">
                 <div class="col-md-4">
                     <label asp-for="ProdutoInsumo.ProdutoId" class="form-label">Produto</label>
-                    <select asp-for="ProdutoInsumo.ProdutoId" class="form-select" asp-items="Model.ProdutosOptions">
-                        <option value="">Selecione...</option>
-                    </select>
+                    @if (Model.ProdutoInsumo.Id == 0)
+                    {
+                        <select asp-for="ProdutoInsumo.ProdutoId" class="form-select" asp-items="Model.ProdutosOptions">
+                            <option value="">Selecione...</option>
+                        </select>
+                    }
+                    else
+                    {
+                        <select asp-for="ProdutoInsumo.ProdutoId" class="form-select" asp-items="Model.ProdutosOptions" disabled></select>
+                        <input type="hidden" asp-for="ProdutoInsumo.ProdutoId" />
+                    }
                     <span asp-validation-for="ProdutoInsumo.ProdutoId" class="text-danger"></span>
                 </div>
                 <div class="col-md-4">
                     <label asp-for="ProdutoInsumo.InsumoId" class="form-label">Insumo</label>
-                    <select asp-for="ProdutoInsumo.InsumoId" class="form-select" asp-items="Model.InsumosOptions">
-                        <option value="">Selecione...</option>
-                    </select>
+                    @if (Model.ProdutoInsumo.Id == 0)
+                    {
+                        <select asp-for="ProdutoInsumo.InsumoId" class="form-select" asp-items="Model.InsumosOptions">
+                            <option value="">Selecione...</option>
+                        </select>
+                    }
+                    else
+                    {
+                        <select asp-for="ProdutoInsumo.InsumoId" class="form-select" asp-items="Model.InsumosOptions" disabled></select>
+                        <input type="hidden" asp-for="ProdutoInsumo.InsumoId" />
+                    }
                     <span asp-validation-for="ProdutoInsumo.InsumoId" class="text-danger"></span>
                 </div>
                 <div class="col-md-4">

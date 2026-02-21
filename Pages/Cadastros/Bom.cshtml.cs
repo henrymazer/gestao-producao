@@ -1,5 +1,7 @@
 using gestao_producao.Data;
 using gestao_producao.Models;
+using gestao_producao.Models.Enums;
+using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.AspNetCore.Mvc.RazorPages;
 using Microsoft.AspNetCore.Mvc.Rendering;
@@ -7,6 +9,7 @@ using Microsoft.EntityFrameworkCore;
 
 namespace gestao_producao.Pages.Cadastros;
 
+[Authorize]
 public class BomModel : PageModel
 {
     private readonly AppDbContext _context;
@@ -25,6 +28,9 @@ public class BomModel : PageModel
 
     [TempData]
     public string? MensagemSucesso { get; set; }
+
+    [TempData]
+    public string? MensagemErro { get; set; }
 
     public async Task OnGetAsync(int? idEdicao)
     {
@@ -99,8 +105,14 @@ public class BomModel : PageModel
                 return NotFound();
             }
 
-            itemDb.ProdutoId = ProdutoInsumo.ProdutoId;
-            itemDb.InsumoId = ProdutoInsumo.InsumoId;
+            if (itemDb.ProdutoId != ProdutoInsumo.ProdutoId || itemDb.InsumoId != ProdutoInsumo.InsumoId)
+            {
+                ModelState.AddModelError(string.Empty, "Para trocar produto ou insumo, exclua a composição atual e cadastre uma nova.");
+                ProdutoInsumo.ProdutoId = itemDb.ProdutoId;
+                ProdutoInsumo.InsumoId = itemDb.InsumoId;
+                return Page();
+            }
+
             itemDb.QuantidadeNecessaria = ProdutoInsumo.QuantidadeNecessaria;
 
             TempData["MensagemSucesso"] = "Composição atualizada com sucesso.";
@@ -116,6 +128,17 @@ public class BomModel : PageModel
         if (item is null)
         {
             return NotFound();
+        }
+
+        var possuiOrdensAbertas = await _context.OrdensProducao
+            .AsNoTracking()
+            .AnyAsync(x => x.ProdutoId == item.ProdutoId
+                        && (x.Status == StatusOrdemProducao.Planejada || x.Status == StatusOrdemProducao.EmAndamento));
+
+        if (possuiOrdensAbertas)
+        {
+            TempData["MensagemErro"] = "Composição não pode ser excluída porque existem ordens de produção planejadas ou em andamento para este produto.";
+            return RedirectToPage();
         }
 
         _context.ProdutoInsumos.Remove(item);

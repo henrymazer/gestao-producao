@@ -20,6 +20,9 @@ public class IndexModel : PageModel
     [TempData]
     public string? MensagemSucesso { get; set; }
 
+    [TempData]
+    public string? MensagemErro { get; set; }
+
     public async Task OnGetAsync()
     {
         Fornecedores = await _context.Fornecedores
@@ -39,7 +42,7 @@ public class IndexModel : PageModel
         var possuiInsumos = await _context.Insumos.AnyAsync(x => x.FornecedorId == id);
         if (possuiInsumos)
         {
-            TempData["MensagemSucesso"] = "Fornecedor não pode ser excluído porque possui insumos vinculados.";
+            TempData["MensagemErro"] = "Fornecedor não pode ser excluído porque possui insumos vinculados.";
             return RedirectToPage();
         }
 
