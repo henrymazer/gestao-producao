@@ -56,25 +56,40 @@ public class BomModel : PageModel
 
     public async Task<IActionResult> OnPostSalvarAsync()
     {
-        await CarregarDadosTelaAsync(ProdutoInsumo.ProdutoId, ProdutoInsumo.InsumoId);
+        ProdutoInsumo? itemDb = null;
+
+        if (ProdutoInsumo.Id != 0)
+        {
+            itemDb = await _context.ProdutoInsumos.FindAsync(ProdutoInsumo.Id);
+            if (itemDb is null)
+            {
+                return NotFound();
+            }
+        }
 
         if (ProdutoInsumo.QuantidadeNecessaria <= 0)
         {
             ModelState.AddModelError("ProdutoInsumo.QuantidadeNecessaria", "A quantidade necessária deve ser maior que zero.");
         }
 
+        var permiteProdutoInativoNaEdicao = itemDb is not null && itemDb.ProdutoId == ProdutoInsumo.ProdutoId;
+
         var produtoExiste = await _context.Produtos
             .AsNoTracking()
-            .AnyAsync(x => x.Id == ProdutoInsumo.ProdutoId && x.Ativo);
+            .AnyAsync(x => x.Id == ProdutoInsumo.ProdutoId
+                        && (x.Ativo || permiteProdutoInativoNaEdicao));
 
         if (!produtoExiste)
         {
             ModelState.AddModelError("ProdutoInsumo.ProdutoId", "Selecione um produto válido.");
         }
 
+        var permiteInsumoInativoNaEdicao = itemDb is not null && itemDb.InsumoId == ProdutoInsumo.InsumoId;
+
         var insumoExiste = await _context.Insumos
             .AsNoTracking()
-            .AnyAsync(x => x.Id == ProdutoInsumo.InsumoId && x.Ativo);
+            .AnyAsync(x => x.Id == ProdutoInsumo.InsumoId
+                        && (x.Ativo || permiteInsumoInativoNaEdicao));
 
         if (!insumoExiste)
         {
@@ -94,6 +109,7 @@ public class BomModel : PageModel
 
         if (!ModelState.IsValid)
         {
+            await CarregarDadosTelaAsync(ProdutoInsumo.ProdutoId, ProdutoInsumo.InsumoId);
             return Page();
         }
 
@@ -104,21 +120,18 @@ public class BomModel : PageModel
         }
         else
         {
-            var itemDb = await _context.ProdutoInsumos.FindAsync(ProdutoInsumo.Id);
-            if (itemDb is null)
-            {
-                return NotFound();
-            }
+            var itemDbEdicao = itemDb!;
 
-            if (itemDb.ProdutoId != ProdutoInsumo.ProdutoId || itemDb.InsumoId != ProdutoInsumo.InsumoId)
+            if (itemDbEdicao.ProdutoId != ProdutoInsumo.ProdutoId || itemDbEdicao.InsumoId != ProdutoInsumo.InsumoId)
             {
                 ModelState.AddModelError(string.Empty, "Para trocar produto ou insumo, exclua a composição atual e cadastre uma nova.");
-                ProdutoInsumo.ProdutoId = itemDb.ProdutoId;
-                ProdutoInsumo.InsumoId = itemDb.InsumoId;
+                ProdutoInsumo.ProdutoId = itemDbEdicao.ProdutoId;
+                ProdutoInsumo.InsumoId = itemDbEdicao.InsumoId;
+                await CarregarDadosTelaAsync(ProdutoInsumo.ProdutoId, ProdutoInsumo.InsumoId);
                 return Page();
             }
 
-            itemDb.QuantidadeNecessaria = ProdutoInsumo.QuantidadeNecessaria;
+            itemDbEdicao.QuantidadeNecessaria = ProdutoInsumo.QuantidadeNecessaria;
 
             TempData["MensagemSucesso"] = "Composição atualizada com sucesso.";
         }
