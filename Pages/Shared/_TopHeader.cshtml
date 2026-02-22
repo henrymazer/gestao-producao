@@ -1,0 +1,16 @@
+<header>
+    <nav class="navbar navbar-expand-sm navbar-light bg-white border-bottom px-3">
+        <div class="container-fluid px-0">
+            @if (User.Identity?.IsAuthenticated ?? false)
+            {
+                <span class="navbar-text text-muted">Sistema de Planejamento e Controle</span>
+            }
+            else
+            {
+                <a class="navbar-brand mb-0 h1" asp-area="" asp-page="/Index">Gestão de Produção</a>
+            }
+
+            <partial name="_LoginPartial" />
+        </div>
+    </nav>
+</header>
