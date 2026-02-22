@@ -4,21 +4,33 @@
     ViewData["Title"] = "Início";
 }
 
-<div class="card border-0 shadow-sm">
-    <div class="card-body p-4">
-        <h1 class="h3 mb-3">Sistema de Gestão de Produção</h1>
-        <p class="text-muted mb-4">Base da Fase 1 concluída: autenticação, banco de dados e estrutura de módulos.</p>
+@if (User.Identity?.IsAuthenticated ?? false)
+{
+    <div class="card border-0 shadow-sm">
+        <div class="card-body p-4">
+            <h1 class="h3 mb-3">Sistema de Gestão de Produção</h1>
+            <p class="text-muted mb-4">Base da Fase 1 concluída: autenticação, banco de dados e estrutura de módulos.</p>
 
-        <div class="row g-3">
-            <div class="col-md-6 col-xl-4">
-                <div class="p-3 bg-light rounded border">Planejamento de Produção</div>
-            </div>
-            <div class="col-md-6 col-xl-4">
-                <div class="p-3 bg-light rounded border">Gestão de Estoque</div>
-            </div>
-            <div class="col-md-6 col-xl-4">
-                <div class="p-3 bg-light rounded border">Rastreamento de Insumos</div>
+            <div class="row g-3">
+                <div class="col-md-6 col-xl-4">
+                    <div class="p-3 bg-light rounded border">Planejamento de Produção</div>
+                </div>
+                <div class="col-md-6 col-xl-4">
+                    <div class="p-3 bg-light rounded border">Gestão de Estoque</div>
+                </div>
+                <div class="col-md-6 col-xl-4">
+                    <div class="p-3 bg-light rounded border">Rastreamento de Insumos</div>
+                </div>
             </div>
         </div>
     </div>
-</div>
+}
+else
+{
+    <div class="card border-0 shadow-sm">
+        <div class="card-body p-4 text-center">
+            <h1 class="h4 mb-3">Acesso restrito</h1>
+            <p class="text-muted mb-0">Use a opção <strong>Entrar</strong> no topo da página para acessar o sistema.</p>
+        </div>
+    </div>
+}
