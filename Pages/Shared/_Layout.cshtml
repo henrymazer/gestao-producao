@@ -38,14 +38,7 @@
                 </aside>
 
                 <div class="col-12 col-lg-9 col-xl-10 p-0">
-                    <header>
-                        <nav class="navbar navbar-expand-sm navbar-light bg-white border-bottom px-3">
-                            <div class="container-fluid px-0">
-                                <span class="navbar-text text-muted">Sistema de Planejamento e Controle</span>
-                                <partial name="_LoginPartial" />
-                            </div>
-                        </nav>
-                    </header>
+                    <partial name="_TopHeader" />
 
                     <main role="main" class="p-3">
                         @RenderBody()
@@ -56,14 +49,7 @@
     }
     else
     {
-        <header>
-            <nav class="navbar navbar-expand-sm navbar-light bg-white border-bottom px-3">
-                <div class="container-fluid px-0">
-                    <a class="navbar-brand mb-0 h1" asp-area="" asp-page="/Index">Gestão de Produção</a>
-                    <partial name="_LoginPartial" />
-                </div>
-            </nav>
-        </header>
+        <partial name="_TopHeader" />
 
         <main role="main" class="container py-4">
             @RenderBody()

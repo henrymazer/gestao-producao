@@ -54,6 +54,17 @@ if (!app.Environment.IsDevelopment())
 
 app.UseHttpsRedirection();
 
+app.Use(async (context, next) =>
+{
+    if (context.Request.Path.StartsWithSegments("/Identity/Account/Register", StringComparison.OrdinalIgnoreCase))
+    {
+        context.Response.StatusCode = StatusCodes.Status404NotFound;
+        return;
+    }
+
+    await next();
+});
+
 app.UseRouting();
 
 app.UseAuthentication();
